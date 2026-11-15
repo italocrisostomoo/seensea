@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SearchBar } from "./SearchBar";
 
 export function Header() {
   return (
@@ -12,6 +13,7 @@ export function Header() {
             Explorar
           </Link>
         </nav>
+        <SearchBar />
       </div>
     </header>
   );

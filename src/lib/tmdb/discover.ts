@@ -3,7 +3,7 @@ import { REVALIDATE, tmdbFetch } from './client';
 import { toMovieSummary } from './mappers';
 import type { MoviePage, SortOrder, TmdbMovieListItem, TmdbPaged } from './types';
 
-const MAX_PAGE = 500;
+export const MAX_PAGE = 500;
 
 export interface DiscoverQuery {
   services?: number[];
