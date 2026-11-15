@@ -1,6 +1,4 @@
-// Os keywordIds abaixo são PROVÁVEIS e estão PENDENTES de verificação contra
-// /search/keyword (aguardando o token do TMDB). Confirmar e anotar a data da verificação:
-// "time travel", "based on true story", "heist".
+// keywordIds verificados em 2026-11-15 via /keyword/{id}
 export interface Theme {
   slug: string;
   name: string;
