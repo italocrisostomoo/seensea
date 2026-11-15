@@ -75,7 +75,7 @@ tests/                      espelha src/lib (ex.: tests/lib/filters.test.ts)
 
 ---
 
-### Tarefa 1 (Aula 1): Projeto, cliente TMDB e grade simples na página inicial
+### Task 1 (Aula 1): Projeto, cliente TMDB e grade simples na página inicial
 
 **Files:**
 - Create: projeto via create-next-app; `vitest.config.ts`; `.env.example`; `src/config/services.ts`; `src/lib/tmdb/{client,types,mappers,discover}.ts`; `src/lib/images.ts`; `src/components/{Header,Footer,MovieCard,MovieGrid}.tsx`
@@ -174,7 +174,7 @@ git commit -m "feat: projeto Next.js com cliente TMDB e grade de filmes disponí
 
 ---
 
-### Tarefa 2 (Aula 1, final): Publicar na Vercel, feito junto com o autor
+### Task 2 (Aula 1, final): Publicar na Vercel, feito junto com o autor
 
 Esta tarefa usa as contas do autor. Quem executa é a sessão principal, guiando o autor passo a passo. Não é um subagente.
 
@@ -184,7 +184,7 @@ Esta tarefa usa as contas do autor. Quem executa é a sessão principal, guiando
 
 ---
 
-### Tarefa 3 (Aula 2): Página do filme
+### Task 3 (Aula 2): Página do filme
 
 **Files:**
 - Create: `src/lib/tmdb/movie.ts`; `src/lib/providers.ts`; `src/components/ServiceBadges.tsx`; `src/app/filme/[id]/page.tsx`; `src/app/not-found.tsx`
@@ -249,7 +249,7 @@ it('getMovie mapeia: overview vazio vira null, diretores por job, elenco ≤ 10,
 
 ---
 
-### Tarefa 4 (Aula 3, parte 1): Filtros ↔ URL ↔ discover
+### Task 4 (Aula 3, parte 1): Filtros ↔ URL ↔ discover
 
 **Files:**
 - Create: `src/config/themes.ts`; `src/lib/themes.ts`; `src/lib/filters.ts`
@@ -325,7 +325,7 @@ it('página é limitada a 1..500', () => {
 
 ---
 
-### Tarefa 5 (Aula 3, parte 2): Página `/explorar` com filtros
+### Task 5 (Aula 3, parte 2): Página `/explorar` com filtros
 
 **Files:**
 - Create: `src/app/explorar/page.tsx`; `src/components/FiltersPanel.tsx` (`'use client'`)
@@ -362,7 +362,7 @@ it('página é limitada a 1..500', () => {
 
 ---
 
-### Tarefa 6 (Aula 4): Rolagem infinita e "voltar" restaurando a posição
+### Task 6 (Aula 4): Rolagem infinita e "voltar" restaurando a posição
 
 **Files:**
 - Create: `src/lib/pagination.ts`; `src/app/api/discover/route.ts`; `src/app/providers.tsx` (`'use client'`); `src/components/InfiniteMovieGrid.tsx` (`'use client'`); `src/components/useScrollRestoration.ts`
@@ -414,7 +414,7 @@ it('502 quando o TMDB falha', async () => { /* discoverMovies rejeita com TmdbEr
 
 ---
 
-### Tarefa 7 (Aula 5): Página inicial com destaque e prateleiras de temas
+### Task 7 (Aula 5): Página inicial com destaque e prateleiras de temas
 
 **Files:**
 - Create: `src/components/Shelf.tsx`; `src/components/Hero.tsx`
@@ -439,7 +439,7 @@ it('502 quando o TMDB falha', async () => { /* discoverMovies rejeita com TmdbEr
 
 ---
 
-### Tarefa 8 (Aula 6): Prateleiras de parecidos e links na página do filme
+### Task 8 (Aula 6): Prateleiras de parecidos e links na página do filme
 
 **Files:**
 - Create: `src/lib/related.ts`
@@ -482,7 +482,7 @@ it('sem tema curado, sem diretor e sem gênero → lista vazia', () => {
 
 ---
 
-### Tarefa 9 (Aula 7): Busca por nome
+### Task 9 (Aula 7): Busca por nome
 
 **Files:**
 - Create: `src/lib/tmdb/search.ts`; `src/components/SearchBar.tsx` (`'use client'`); `src/app/buscar/page.tsx`
@@ -526,7 +526,7 @@ it('codifica a consulta e manda os parâmetros fixos', async () => {
 
 ---
 
-### Tarefa 10 (Aula 8): Acabamento — trailer, carregamento, erros e responsividade
+### Task 10 (Aula 8): Acabamento — trailer, carregamento, erros e responsividade
 
 **Files:**
 - Create: `src/lib/trailer.ts`; `src/components/Trailer.tsx`; `src/app/loading.tsx`; `src/app/filme/[id]/loading.tsx`; `src/app/explorar/loading.tsx`; `src/app/error.tsx` (`'use client'`); `README.md` (substituir o padrão)
