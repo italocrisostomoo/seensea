@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { ServiceBadges } from "@/components/ServiceBadges";
+import { Shelf } from "@/components/Shelf";
+import { exploreHref } from "@/lib/filters";
 import { tmdbImage } from "@/lib/images";
+import { relatedShelves } from "@/lib/related";
+import { themesForMovie } from "@/lib/themes";
+import { discoverMovies } from "@/lib/tmdb/discover";
 import { getMovie, parseMovieId } from "@/lib/tmdb/movie";
 import type { Person } from "@/lib/tmdb/types";
 
@@ -32,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 function PersonPhoto({ person }: { person: Person }) {
   const photo = tmdbImage(person.profilePath, "w185");
   return (
-    <li className="flex w-24 shrink-0 flex-col items-center gap-1 text-center">
+    <>
       <div className="relative size-20 overflow-hidden rounded-full bg-zinc-800">
         {photo ? (
           <Image src={photo} alt={person.name} fill sizes="80px" className="object-cover" />
@@ -43,7 +49,7 @@ function PersonPhoto({ person }: { person: Person }) {
         )}
       </div>
       <span className="text-xs text-zinc-300">{person.name}</span>
-    </li>
+    </>
   );
 }
 
@@ -53,11 +59,14 @@ async function MovieDetailsView({ id }: { id: number }) {
 
   const poster = tmdbImage(movie.posterPath, "w342");
   const backdrop = tmdbImage(movie.backdropPath, "w1280");
+  const themes = themesForMovie(movie.keywordIds);
+  const shelves = relatedShelves(movie);
+  const results = await Promise.allSettled(shelves.map((s) => discoverMovies(s.query)));
+  const chipClass = "rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-200 hover:bg-zinc-700";
   const meta = [
     movie.year ? String(movie.year) : null,
     movie.runtime ? formatRuntime(movie.runtime) : null,
     `★ ${movie.rating.toFixed(1).replace(".", ",")}`,
-    movie.genres.length ? movie.genres.map((g) => g.name).join(", ") : null,
   ].filter(Boolean);
 
   return (
@@ -88,16 +97,43 @@ async function MovieDetailsView({ id }: { id: number }) {
         <div className="flex min-w-0 flex-1 flex-col gap-5">
           <h1 className="text-3xl font-bold text-white">{movie.title}</h1>
           <p className="text-sm text-zinc-300">{meta.join(" · ")}</p>
+          {movie.genres.length > 0 && (
+            <ul className="flex flex-wrap gap-2">
+              {movie.genres.map((g) => (
+                <li key={g.id}>
+                  <Link href={exploreHref({ genres: [g.id] })} className={chipClass}>
+                    {g.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {themes.length > 0 && (
+            <ul className="flex flex-wrap gap-2">
+              {themes.map((t) => (
+                <li key={t.slug}>
+                  <Link href={exploreHref({ theme: t.slug })} className={chipClass}>
+                    {t.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
           <p className="leading-relaxed text-zinc-200">
             {movie.overview ?? "Sinopse indisponível em português."}
           </p>
           <ServiceBadges providers={movie.providers} variant="page" />
           {movie.directors.length > 0 && (
             <p className="text-sm text-zinc-300">
-              <span className="text-zinc-400">
-                Direção: 
-              </span>
-              {movie.directors.map((d) => d.name).join(", ")}
+              <span className="text-zinc-400">Direção:</span>{" "}
+              {movie.directors.map((d, i) => (
+                <span key={d.id}>
+                  {i > 0 && ", "}
+                  <Link href={exploreHref({ crewId: d.id })} className="hover:text-white hover:underline">
+                    {d.name}
+                  </Link>
+                </span>
+              ))}
             </p>
           )}
           {movie.cast.length > 0 && (
@@ -105,12 +141,26 @@ async function MovieDetailsView({ id }: { id: number }) {
               <h2 className="mb-3 text-lg font-semibold text-white">Elenco</h2>
               <ul className="flex gap-4 overflow-x-auto pb-2">
                 {movie.cast.map((p) => (
-                  <PersonPhoto key={p.id} person={p} />
+                  <li key={p.id} className="shrink-0">
+                    <Link
+                      href={exploreHref({ castId: p.id })}
+                      className="flex w-24 flex-col items-center gap-1 text-center hover:text-white"
+                    >
+                      <PersonPhoto person={p} />
+                    </Link>
+                  </li>
                 ))}
               </ul>
             </section>
           )}
         </div>
+      </div>
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 pb-10">
+        {shelves.map((shelf, i) => {
+          const r = results[i];
+          const movies = r.status === "fulfilled" ? r.value.results.filter((m) => m.id !== movie.id) : [];
+          return <Shelf key={shelf.title} title={shelf.title} href={shelf.href} movies={movies} />;
+        })}
       </div>
     </article>
   );
