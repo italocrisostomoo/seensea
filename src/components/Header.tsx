@@ -7,6 +7,11 @@ export function Header() {
         <Link href="/" className="text-xl font-bold tracking-tight text-white">
           🎬 Catálogo
         </Link>
+        <nav className="ml-6">
+          <Link href="/explorar" className="text-sm text-zinc-300 hover:text-white">
+            Explorar
+          </Link>
+        </nav>
       </div>
     </header>
   );

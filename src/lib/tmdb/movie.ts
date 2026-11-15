@@ -54,3 +54,26 @@ export async function getMovieProviders(id: number): Promise<ProviderSplit> {
   );
   return splitProviders(data.results?.BR?.flatrate);
 }
+
+export async function getGenres(): Promise<{ id: number; name: string }[]> {
+  const data = await tmdbFetch<{ genres?: { id: number; name: string }[] }>(
+    '/genre/movie/list',
+    { language: 'pt-BR' },
+    { revalidate: REVALIDATE.lists },
+  );
+  return data.genres ?? [];
+}
+
+export async function getPerson(id: number): Promise<{ id: number; name: string } | null> {
+  try {
+    const raw = await tmdbFetch<{ id: number; name: string }>(
+      `/person/${id}`,
+      { language: 'pt-BR' },
+      { revalidate: REVALIDATE.lists },
+    );
+    return { id: raw.id, name: raw.name };
+  } catch (e) {
+    if (e instanceof TmdbError && e.status === 404) return null;
+    throw e;
+  }
+}

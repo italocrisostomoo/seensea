@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { getMovie, getMovieProviders, parseMovieId } from '@/lib/tmdb/movie';
+import { getGenres, getMovie, getMovieProviders, getPerson, parseMovieId } from '@/lib/tmdb/movie';
 
 beforeEach(() => vi.stubEnv('TMDB_READ_TOKEN', 'tok'));
 afterEach(() => {
@@ -91,4 +91,21 @@ it('getMovieProviders lê /movie/{id}/watch/providers do BR', async () => {
   const s = await getMovieProviders(7);
   expect(new URL(fetchMock.mock.calls[0][0]).pathname).toBe('/3/movie/7/watch/providers');
   expect(s.main.map((x) => x.id)).toEqual([8]);
+});
+
+it('getPerson retorna null no 404 e { id, name } no 200', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({}, 404)));
+  expect(await getPerson(1)).toBeNull();
+  const fetchMock = vi.fn().mockResolvedValue(json({ id: 5, name: 'Fulana', biography: 'x' }));
+  vi.stubGlobal('fetch', fetchMock);
+  expect(await getPerson(5)).toEqual({ id: 5, name: 'Fulana' });
+  expect(new URL(fetchMock.mock.calls[0][0]).pathname).toBe('/3/person/5');
+});
+it('getGenres devolve os gêneros de /genre/movie/list', async () => {
+  const fetchMock = vi.fn().mockResolvedValue(json({ genres: [{ id: 18, name: 'Drama' }] }));
+  vi.stubGlobal('fetch', fetchMock);
+  expect(await getGenres()).toEqual([{ id: 18, name: 'Drama' }]);
+  const url = new URL(fetchMock.mock.calls[0][0]);
+  expect(url.pathname).toBe('/3/genre/movie/list');
+  expect(url.searchParams.get('language')).toBe('pt-BR');
 });
