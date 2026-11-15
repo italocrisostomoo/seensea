@@ -1,8 +1,9 @@
 'use client';
 
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { filtersToSearchParams, type Filters } from '@/lib/filters';
+import { consumeTraversal } from '@/lib/navigation';
 import { getNextPageParam } from '@/lib/pagination';
 import type { MoviePage } from '@/lib/tmdb/types';
 import { MovieGrid } from './MovieGrid';
@@ -24,6 +25,23 @@ export function InfiniteMovieGrid({
   initialPage: MoviePage;
 }) {
   const key = filtersToSearchParams(filters).toString();
+  const queryClient = useQueryClient();
+
+  // Voltar/avançar reaproveita as páginas em cache e a rolagem salva. Qualquer outra
+  // navegação (filtro novo, link, mesmo para filtros já vistos) recomeça na página 1,
+  // no topo: reduz o cache a `initialPage` e apaga a posição salva. Roda antes da
+  // pintura; o ref evita decidir duas vezes para a mesma chave (StrictMode).
+  const decidedKey = useRef<string | null>(null);
+  useLayoutEffect(() => {
+    if (decidedKey.current === key) return;
+    decidedKey.current = key;
+    if (consumeTraversal()) return;
+    queryClient.setQueryData(['discover', key], { pages: [initialPage], pageParams: [1] });
+    try {
+      sessionStorage.removeItem(`scroll:${key}`);
+    } catch {}
+  }, [key, initialPage, queryClient]);
+
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isError, refetch } =
     useInfiniteQuery({
       queryKey: ['discover', key],
@@ -34,7 +52,7 @@ export function InfiniteMovieGrid({
     });
 
   const movies = useMemo(() => data.pages.flatMap((p) => p.results), [data]);
-  useScrollRestoration(key, true);
+  useScrollRestoration(key, movies.length > 0);
 
   const sentinel = useRef<HTMLDivElement>(null);
   useEffect(() => {
