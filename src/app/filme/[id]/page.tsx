@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
-import { Suspense } from "react";
 import { ServiceBadges } from "@/components/ServiceBadges";
 import { tmdbImage } from "@/lib/images";
 import { getMovie, parseMovieId } from "@/lib/tmdb/movie";
@@ -15,10 +13,10 @@ function formatRuntime(min: number): string {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  await connection();
   const id = parseMovieId((await params).id);
-  const movie = id ? await getMovie(id) : null;
-  if (!movie) return { title: "Filme não encontrado" };
+  if (id === null) notFound();
+  const movie = await getMovie(id);
+  if (!movie) notFound();
   const backdrop = tmdbImage(movie.backdropPath, "w1280");
   return {
     title: movie.title,
@@ -49,10 +47,7 @@ function PersonPhoto({ person }: { person: Person }) {
   );
 }
 
-async function MovieDetailsView({ params }: Props) {
-  await connection(); // renderiza em tempo de requisição (usa o token)
-  const id = parseMovieId((await params).id);
-  if (id === null) notFound();
+async function MovieDetailsView({ id }: { id: number }) {
   const movie = await getMovie(id);
   if (!movie) notFound();
 
@@ -121,12 +116,16 @@ async function MovieDetailsView({ params }: Props) {
   );
 }
 
-export default function MoviePage(props: Props) {
+// Rota bloqueante (sem casca estática): o notFound() roda antes de qualquer streaming,
+// então ID inválido ou inexistente responde com status 404 real (e não um "soft 404").
+export const instant = false;
+
+export default async function MoviePage({ params }: Props) {
+  const id = parseMovieId((await params).id);
+  if (id === null) notFound();
   return (
     <main className="flex-1">
-      <Suspense fallback={<p className="px-4 py-8 text-zinc-400">Carregando…</p>}>
-        <MovieDetailsView {...props} />
-      </Suspense>
+      <MovieDetailsView id={id} />
     </main>
   );
 }

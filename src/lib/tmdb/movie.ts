@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { splitProviders } from '@/lib/providers';
 import { REVALIDATE, TmdbError, tmdbFetch } from './client';
 import type { MovieDetails, ProviderSplit, TmdbMovieDetails, TmdbProvider } from './types';
@@ -8,7 +9,8 @@ export function parseMovieId(raw: string): number | null {
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
-export async function getMovie(id: number): Promise<MovieDetails | null> {
+// cache(): generateMetadata e a página pedem o mesmo filme na mesma requisição.
+export const getMovie = cache(async (id: number): Promise<MovieDetails | null> => {
   let raw: TmdbMovieDetails;
   try {
     raw = await tmdbFetch<TmdbMovieDetails>(
@@ -42,7 +44,7 @@ export async function getMovie(id: number): Promise<MovieDetails | null> {
       .map((c) => ({ id: c.id, name: c.name, profilePath: c.profile_path })),
     providers: splitProviders(raw['watch/providers']?.results?.BR?.flatrate),
   };
-}
+});
 
 export async function getMovieProviders(id: number): Promise<ProviderSplit> {
   const data = await tmdbFetch<{ results?: { BR?: { flatrate?: TmdbProvider[] } } }>(
