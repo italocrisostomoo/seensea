@@ -6,7 +6,7 @@ export function Header() {
     <header className="border-b border-white/10 bg-black/40">
       <div className="mx-auto flex max-w-7xl items-center px-4 py-4">
         <Link href="/" className="text-xl font-bold tracking-tight text-white">
-          🎬 Catálogo
+          SeenSea
         </Link>
         <nav className="ml-6">
           <Link href="/explorar" className="text-sm text-zinc-300 hover:text-white">

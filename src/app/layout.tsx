@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Catálogo", template: "%s · Catálogo" },
+  title: { default: "SeenSea", template: "%s · SeenSea" },
   description: "Filmes disponíveis nos streamings por assinatura no Brasil.",
 };
 
