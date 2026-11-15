@@ -26,3 +26,24 @@ it('discoverMovies limita totalPages a 500', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(body))));
   expect((await discoverMovies({})).totalPages).toBe(500);
 });
+
+const D = '2026-11-15';
+it('gêneros: E por padrão (vírgula), OU com genreMatch any (barra)', () => {
+  expect(buildDiscoverParams({ genres: [18, 878] }, D).get('with_genres')).toBe('18,878');
+  expect(buildDiscoverParams({ genres: [18, 878], genreMatch: 'any' }, D).get('with_genres')).toBe('18|878');
+});
+it('keywords com OU, ator e diretor', () => {
+  const p = buildDiscoverParams({ keywordIds: [1, 2], castId: 3, crewId: 4 }, D);
+  expect([p.get('with_keywords'), p.get('with_cast'), p.get('with_crew')]).toEqual(['1|2', '3', '4']);
+});
+it('ordem nota exige mínimo de votos', () => {
+  const p = buildDiscoverParams({ sort: 'nota' }, D);
+  expect([p.get('sort_by'), p.get('vote_count.gte')]).toEqual(['vote_average.desc', '200']);
+});
+it('ordem lançamento não traz datas futuras', () => {
+  const p = buildDiscoverParams({ sort: 'lancamento' }, '2026-11-15');
+  expect([p.get('sort_by'), p.get('primary_release_date.lte')]).toEqual(['primary_release_date.desc', '2026-11-15']);
+});
+it('página é limitada a 1..500', () => {
+  expect(buildDiscoverParams({ page: 900 }, D).get('page')).toBe('500');
+});
