@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FiltersPanel } from '@/components/FiltersPanel';
-import { MovieGrid } from '@/components/MovieGrid';
+import { InfiniteMovieGrid } from '@/components/InfiniteMovieGrid';
 import { filtersToDiscoverQuery, parseFilters } from '@/lib/filters';
 import { discoverMovies } from '@/lib/tmdb/discover';
 import { getGenres, getPerson } from '@/lib/tmdb/movie';
@@ -26,7 +26,7 @@ export default async function ExplorePage({ searchParams }: Props) {
   const filters = parseFilters(toURLSearchParams(await searchParams));
   const personId = filters.castId ?? filters.crewId;
 
-  const [genres, { results }, person] = await Promise.all([
+  const [genres, firstPage, person] = await Promise.all([
     getGenres(),
     discoverMovies(filtersToDiscoverQuery(filters)),
     personId !== null ? getPerson(personId) : Promise.resolve(null),
@@ -36,8 +36,8 @@ export default async function ExplorePage({ searchParams }: Props) {
     <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold text-white">Explorar</h1>
       <FiltersPanel filters={filters} genres={genres} personName={person?.name ?? null} />
-      {results.length > 0 ? (
-        <MovieGrid movies={results} />
+      {firstPage.results.length > 0 ? (
+        <InfiniteMovieGrid filters={filters} initialPage={firstPage} />
       ) : (
         <div className="flex flex-col items-start gap-4 py-8">
           <p className="text-zinc-300">Nenhum filme encontrado com esses filtros.</p>
