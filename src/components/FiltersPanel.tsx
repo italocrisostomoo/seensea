@@ -5,6 +5,7 @@ import { SERVICES } from '@/config/services';
 import { THEMES } from '@/config/themes';
 import { type Filters, filtersToSearchParams } from '@/lib/filters';
 import type { SortOrder } from '@/lib/tmdb/types';
+import { Select, type SelectOption } from './Select';
 
 interface Props {
   filters: Filters;
@@ -12,10 +13,15 @@ interface Props {
   personName: string | null;
 }
 
-const SORT_OPTIONS: { value: SortOrder; label: string }[] = [
+const SORT_OPTIONS: SelectOption<SortOrder>[] = [
   { value: 'popularidade', label: 'Popularidade' },
   { value: 'nota', label: 'Nota' },
   { value: 'lancamento', label: 'Lançamento' },
+];
+
+const THEME_OPTIONS: SelectOption<string>[] = [
+  { value: '', label: 'Todos os temas' },
+  ...THEMES.map((t) => ({ value: t.slug, label: t.name })),
 ];
 
 function toggle(list: number[], id: number): number[] {
@@ -30,8 +36,6 @@ function chipClass(active: boolean): string {
   }`;
 }
 
-const selectClass =
-  'rounded-md border border-white/15 bg-black/60 px-3 py-2 text-sm text-fg focus:border-accent focus:outline-none';
 const groupTitle = 'mb-2.5 text-sm font-semibold text-fg';
 
 export function FiltersPanel({ filters, genres, personName }: Props) {
@@ -45,7 +49,7 @@ export function FiltersPanel({ filters, genres, personName }: Props) {
   const hasPerson = filters.castId !== null || filters.crewId !== null;
 
   return (
-    <details open className="mb-10 rounded-xl border border-line bg-black/40 p-4 backdrop-blur md:p-6">
+    <details open className="relative z-20 mb-10 rounded-xl border border-line bg-black/40 p-4 backdrop-blur md:p-6">
       <summary className="cursor-pointer text-sm font-semibold text-fg md:hidden">Filtros</summary>
       <div className="mt-3 flex flex-col gap-5 md:mt-0">
         <div>
@@ -89,36 +93,21 @@ export function FiltersPanel({ filters, genres, personName }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-fg-muted">
-            Tema
-            <select
-              className={selectClass}
-              value={filters.theme ?? ''}
-              onChange={(e) => update({ theme: e.target.value || null })}
-            >
-              <option value="">Todos os temas</option>
-              {THEMES.map((t) => (
-                <option key={t.slug} value={t.slug}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select
+            label="Tema"
+            value={filters.theme ?? ''}
+            options={THEME_OPTIONS}
+            onChange={(v) => update({ theme: v || null })}
+            highlight={filters.theme !== null}
+            dividerAfterFirst
+          />
 
-          <label className="flex items-center gap-2 text-sm text-fg-muted">
-            Ordem
-            <select
-              className={selectClass}
-              value={filters.sort}
-              onChange={(e) => update({ sort: e.target.value as SortOrder })}
-            >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Select
+            label="Ordem"
+            value={filters.sort}
+            options={SORT_OPTIONS}
+            onChange={(v) => update({ sort: v })}
+          />
 
           {hasPerson && personName && (
             <button
