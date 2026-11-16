@@ -34,13 +34,15 @@ export default function SignupPage() {
     }
 
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (signUpError) {
         setError(signUpError.message);
+      } else if (data.session) {
+        router.push('/');
       } else {
         setSuccess(true);
         setTimeout(() => {
