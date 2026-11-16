@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { HeroBackdrop, MovieMeta, TitleArt } from "@/components/Hero";
 import { ServiceBadges } from "@/components/ServiceBadges";
 import { Shelf } from "@/components/Shelf";
+import { HomeTabs } from "@/components/HomeTabs";
 import { THEMES } from "@/config/themes";
 import { exploreHref } from "@/lib/filters";
 import { DEFAULT_PALETTE, paletteStyle } from "@/lib/palette";
@@ -112,9 +113,11 @@ export default function Home() {
   return (
     <main className="flex flex-1 flex-col pb-12">
       {/* Suspense: a busca ao TMDB roda em tempo de requisição, então o build não exige o token. */}
-      <Suspense fallback={<HomeSkeleton />}>
-        <HomeContent />
-      </Suspense>
+      <HomeTabs>
+        <Suspense fallback={<HomeSkeleton />}>
+          <HomeContent />
+        </Suspense>
+      </HomeTabs>
     </main>
   );
 }
