@@ -7,6 +7,7 @@ import { HeroBackdrop, MovieMeta, TitleArt } from "@/components/Hero";
 import { ServiceBadges } from "@/components/ServiceBadges";
 import { Shelf } from "@/components/Shelf";
 import { Trailer } from "@/components/Trailer";
+import { MovieListButton } from "@/components/MovieListButton";
 import { exploreHref } from "@/lib/filters";
 import { tmdbImage } from "@/lib/images";
 import { paletteStyle } from "@/lib/palette";
@@ -114,6 +115,10 @@ async function MovieDetailsView({ id }: { id: number }) {
             )}
             <div className="flex flex-col gap-6 pt-2">
               <ServiceBadges providers={movie.providers} variant="page" />
+              <div className="flex flex-wrap gap-3">
+                <MovieListButton tmdbId={movie.id} type="watched" />
+                <MovieListButton tmdbId={movie.id} type="watchlist" />
+              </div>
               {movie.trailerKey && (
                 <a
                   href="#trailer"
