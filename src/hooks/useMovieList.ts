@@ -3,62 +3,73 @@
 import { useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { idsIn, removeEntry, setStatus, type ListEntry, type ListType } from '@/lib/lists';
 import { useAuth } from './useAuth';
 
-export type ListType = 'watched' | 'watchlist';
+export type { ListType };
 
-const TABLE: Record<ListType, string> = { watched: 'watched_movies', watchlist: 'watchlist_movies' };
+const TABLE = 'movie_lists';
 
 export function useMovieList(type: ListType) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const queryKey = ['lista', type, user?.id];
+  const userId = user?.id;
 
   const query = useQuery({
-    queryKey,
-    enabled: !!user,
+    queryKey: ['listas', userId],
+    enabled: !!userId,
     staleTime: 0,
-    queryFn: async () => {
+    queryFn: async (): Promise<ListEntry[]> => {
       const { data, error } = await supabase
-        .from(TABLE[type])
-        .select('tmdb_id')
-        .eq('user_id', user!.id)
+        .from(TABLE)
+        .select('tmdb_id, status')
+        .eq('user_id', userId!)
         .order('added_at', { ascending: false });
       if (error) throw error;
-      return data.map((m: { tmdb_id: number }) => m.tmdb_id);
+      return data.map((r: { tmdb_id: number; status: ListType }) => ({ tmdbId: r.tmdb_id, status: r.status }));
     },
   });
 
   const update = useCallback(
-    (fn: (prev: number[]) => number[]) => queryClient.setQueryData<number[]>(['lista', type, user?.id], (prev) => fn(prev ?? [])),
-    [queryClient, type, user?.id],
+    (fn: (prev: ListEntry[]) => ListEntry[]) =>
+      queryClient.setQueryData<ListEntry[]>(['listas', userId], (prev) => fn(prev ?? [])),
+    [queryClient, userId],
   );
 
   const addMovie = useCallback(
     async (tmdbId: number) => {
-      if (!user) throw new Error('Not authenticated');
-      const { error } = await supabase.from(TABLE[type]).insert({ user_id: user.id, tmdb_id: tmdbId });
-      // 23505 = já estava na lista (UNIQUE): o estado final é o desejado.
-      if (error && error.code !== '23505') throw error;
-      update((prev) => (prev.includes(tmdbId) ? prev : [tmdbId, ...prev]));
+      if (!userId) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from(TABLE)
+        .upsert(
+          { user_id: userId, tmdb_id: tmdbId, status: type, added_at: new Date().toISOString() },
+          { onConflict: 'user_id,tmdb_id' },
+        );
+      if (error) throw error;
+      update((prev) => setStatus(prev, tmdbId, type));
     },
-    [user, type, update],
+    [userId, type, update],
   );
 
   const removeMovie = useCallback(
     async (tmdbId: number) => {
-      if (!user) throw new Error('Not authenticated');
-      const { error } = await supabase.from(TABLE[type]).delete().eq('user_id', user.id).eq('tmdb_id', tmdbId);
+      if (!userId) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from(TABLE)
+        .delete()
+        .eq('user_id', userId)
+        .eq('tmdb_id', tmdbId)
+        .eq('status', type);
       if (error) throw error;
-      update((prev) => prev.filter((id) => id !== tmdbId));
+      update((prev) => removeEntry(prev, tmdbId, type));
     },
-    [user, type, update],
+    [userId, type, update],
   );
 
-  const movies = query.data ?? [];
+  const movies = idsIn(query.data ?? [], type);
   return {
     movies,
-    loading: !!user && query.isPending,
+    loading: !!userId && query.isPending,
     error: query.isError,
     addMovie,
     removeMovie,
