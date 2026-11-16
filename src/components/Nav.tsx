@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { LogoMark } from './LogoMark';
+import { UserMenu } from './UserMenu';
 
 const icon = 'size-6 fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]';
 
@@ -79,25 +80,31 @@ export function Nav() {
             );
           })}
         </ul>
+        <div className="mt-auto">
+          <UserMenu />
+        </div>
       </nav>
 
       {/* Celular: barra no topo, sobreposta à imagem e rolando junto com a página. */}
       <header className="absolute inset-x-0 top-0 z-40 flex items-center gap-1 bg-gradient-to-b from-black/80 to-transparent px-4 pb-6 pt-3 md:hidden">
-        <Link href="/" className="mr-auto flex items-center gap-2 text-lg font-bold text-fg">
+        <Link href="/" className="flex items-center gap-2 text-lg font-bold text-fg">
           <LogoMark className="w-7 text-accent" />
           <span className="heading">SeenSea</span>
         </Link>
-        {ITEMS.slice(1).map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-label={item.label}
-            aria-current={isActive(pathname, item.href) ? 'page' : undefined}
-            className="flex size-11 items-center justify-center rounded-full text-fg-muted aria-[current=page]:text-fg"
-          >
-            {item.icon}
-          </Link>
-        ))}
+        <div className="ml-auto flex items-center gap-2">
+          {ITEMS.slice(1).map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-label={item.label}
+              aria-current={isActive(pathname, item.href) ? 'page' : undefined}
+              className="flex size-11 items-center justify-center rounded-full text-fg-muted aria-[current=page]:text-fg"
+            >
+              {item.icon}
+            </Link>
+          ))}
+          <UserMenu />
+        </div>
       </header>
     </>
   );
