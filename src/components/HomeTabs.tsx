@@ -1,21 +1,34 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
-import { useMovieList } from '@/hooks/useMovieList';
-import { Shelf } from '@/components/Shelf';
+import { useMovieList, type ListType } from '@/hooks/useMovieList';
+import { MovieCard } from '@/components/MovieCard';
+import type { MovieSummary } from '@/lib/tmdb/types';
 
 interface HomeTabsProps {
-  children: React.ReactNode; // Content for "Destaque" tab
+  children: React.ReactNode;
 }
 
-type TabType = 'destaque' | 'watched' | 'watchlist';
+type TabType = 'destaque' | ListType;
 
-function ListMoviesTab({ type }: { type: 'watched' | 'watchlist' }) {
+async function fetchSummaries(ids: number[]): Promise<MovieSummary[]> {
+  const res = await fetch(`/api/filmes?ids=${ids.join(',')}`);
+  if (!res.ok) throw new Error(`api/filmes ${res.status}`);
+  return res.json();
+}
+
+function ListMoviesTab({ type }: { type: ListType }) {
   const { user } = useAuth();
-  const { movies, loading } = useMovieList(type);
+  const { movies, loading, error } = useMovieList(type);
   const label = type === 'watched' ? 'Já assisti' : 'Quero assistir';
+  const details = useQuery({
+    queryKey: ['filmes', movies],
+    queryFn: () => fetchSummaries(movies),
+    enabled: movies.length > 0,
+  });
 
   if (!user) {
     return (
@@ -31,39 +44,61 @@ function ListMoviesTab({ type }: { type: 'watched' | 'watchlist' }) {
     );
   }
 
-  if (loading) {
+  if (error || details.isError) {
     return (
-      <div className="px-5 py-12">
-        <div className="h-6 w-32 animate-pulse rounded bg-white/10" />
+      <div className="px-5 py-12 text-center md:px-12">
+        <p className="text-fg/70">Não foi possível carregar a lista. Tente recarregar a página.</p>
+      </div>
+    );
+  }
+
+  if (loading || (movies.length > 0 && details.isPending)) {
+    return (
+      <div aria-busy className="grid grid-cols-2 gap-4 px-5 py-8 sm:grid-cols-3 md:px-12 lg:grid-cols-5 xl:grid-cols-6">
+        <span className="sr-only">Carregando…</span>
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} className="aspect-[2/3] animate-pulse rounded-lg bg-white/10" />
+        ))}
       </div>
     );
   }
 
   if (movies.length === 0) {
     return (
-      <div className="px-5 py-12 text-center">
-        <p className="text-fg/70">Nenhum filme em {label.toLowerCase()} ainda</p>
+      <div className="px-5 py-12 text-center md:px-12">
+        <p className="text-fg/70">
+          {type === 'watched'
+            ? 'Nenhum filme marcado como "Já assisti" ainda.'
+            : 'Nenhum filme em "Quero assistir" ainda.'}
+        </p>
+        <p className="mt-2 text-sm text-fg/50">Abra a página de um filme e use os botões abaixo da sinopse.</p>
       </div>
     );
   }
 
+  const list = details.data ?? [];
   return (
-    <div className="px-5 py-8">
+    <section aria-label={label} className="px-5 py-8 md:px-12">
       <p className="mb-4 text-sm text-fg/70">
-        {movies.length} filme{movies.length !== 1 ? 's' : ''} {label.toLowerCase()}
+        {list.length} filme{list.length !== 1 ? 's' : ''}
       </p>
-    </div>
+      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+        {list.map((movie) => (
+          <li key={movie.id}>
+            <MovieCard movie={movie} />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
 export function HomeTabs({ children }: HomeTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('destaque');
-  const { user } = useAuth();
 
   return (
     <div className="flex flex-1 flex-col">
-      {/* Tab Navigation */}
-      <div className="flex gap-6 border-b border-fg/10 px-5 py-4 md:pl-[calc(var(--rail)+1rem)]">
+      <div className="flex gap-6 border-b border-fg/10 px-5 pb-4 pt-20 md:px-12 md:pt-6">
         <button
           onClick={() => setActiveTab('destaque')}
           className={`text-sm font-medium transition ${

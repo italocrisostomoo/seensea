@@ -29,14 +29,12 @@ export function UserMenu() {
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-sm text-fg/70">{user.email}</span>
-      <button
-        onClick={handleLogout}
-        className="rounded-md bg-fg/10 px-3 py-2 text-sm font-medium text-fg transition hover:bg-fg/20"
-      >
-        Sair
-      </button>
-    </div>
+    <button
+      onClick={handleLogout}
+      title={`Conectado como ${user.email}`}
+      className="rounded-md bg-fg/10 px-3 py-2 text-sm font-medium text-fg transition hover:bg-fg/20"
+    >
+      Sair
+    </button>
   );
 }

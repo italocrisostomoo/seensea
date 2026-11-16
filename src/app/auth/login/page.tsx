@@ -28,8 +28,8 @@ export default function LoginPage() {
       } else {
         router.push('/');
       }
-    } catch (err) {
-      setError('An unexpected error occurred');
+    } catch {
+      setError('Algo deu errado. Tente de novo.');
     } finally {
       setLoading(false);
     }
