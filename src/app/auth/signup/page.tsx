@@ -123,6 +123,8 @@ export default function SignupPage() {
             >
               {loading ? 'Cadastrando...' : 'Cadastrar'}
             </button>
+
+            <p className="text-center text-xs text-fg/50">Guardamos só seu email e suas listas de filmes.</p>
           </form>
         )}
 
