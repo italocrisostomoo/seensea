@@ -3,9 +3,9 @@ import { PageShell } from "@/components/PageShell";
 
 export default function NotFound() {
   return (
-    <PageShell title="Filme não encontrado">
+    <PageShell title="Página não encontrada">
       <p className="mb-6 max-w-[50ch] text-fg-muted">
-        Esse endereço não leva a nenhum filme do catálogo. Busque pelo nome ou volte ao início.
+        Esse endereço não existe no SeenSea. Volte ao início ou busque um filme pelo nome.
       </p>
       <div className="flex flex-wrap gap-3">
         <Link href="/buscar" className="rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:brightness-110">

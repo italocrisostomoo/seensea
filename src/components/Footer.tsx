@@ -1,3 +1,4 @@
+import { AVAILABILITY_ATTRIBUTION } from "@/lib/attribution";
 import { LogoMark } from "./LogoMark";
 
 export function Footer() {
@@ -19,7 +20,7 @@ export function Footer() {
           </a>
           : This product uses the TMDB API but is not endorsed or certified by TMDB.
         </p>
-        <p>Dados de disponibilidade: JustWatch</p>
+        <p>{AVAILABILITY_ATTRIBUTION}</p>
       </div>
     </footer>
   );

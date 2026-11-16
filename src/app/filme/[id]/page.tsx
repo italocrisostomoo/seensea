@@ -68,6 +68,9 @@ async function MovieDetailsView({ id }: { id: number }) {
     getTitleLogo(movie.id),
     Promise.allSettled(shelves.map((s) => discoverMovies(s.query))),
   ]);
+  results.forEach((r, i) => {
+    if (r.status === "rejected") console.error(`[filme ${movie.id}] falha na prateleira "${shelves[i].title}":`, r.reason);
+  });
   const poster = tmdbImage(movie.posterPath, "w500");
   const themes = themesForMovie(movie.keywordIds);
   const tags = [
@@ -178,8 +181,15 @@ async function MovieDetailsView({ id }: { id: number }) {
   );
 }
 
-// Rota bloqueante (sem casca estática): o notFound() roda antes de qualquer streaming,
-// então ID inválido ou inexistente responde com status 404 real (e não um "soft 404").
+// `instant = false` NÃO faz o notFound() devolver status 404. Ele só desliga a validação de
+// "navegação instantânea" e da casca estática; o build marca a rota como ◐ (parcialmente
+// pré-renderizada). A checagem feita em tempo de requisição (getMovie + notFound) roda depois
+// que a casca já foi enviada, então o status HTTP continua 200 (ver "Status codes" em loading.md).
+//
+// Trade-off sobre o 404:
+// - ID malformado (/filme/abc, /filme/0): src/proxy.ts responde antes da rota, com 404 real.
+// - ID válido que não existe no TMDB (/filme/999999999): "soft 404", ou seja, status 200 com
+//   noindex e a tela "Filme não encontrado". Só dá para saber que não existe consultando o TMDB.
 export const instant = false;
 
 export default async function MoviePage({ params }: Props) {

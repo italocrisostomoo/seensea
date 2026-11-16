@@ -6,7 +6,7 @@ Demo: _em breve_
 
 ## Funcionalidades
 
-- Início com um filme em destaque e prateleiras por serviço e por tema.
+- Início com um filme em destaque e prateleiras por tema.
 - Explorar com filtros (serviços, gêneros, tema, ator e diretor), ordenação por popularidade, nota ou lançamento e rolagem infinita.
 - Busca por nome, com a disponibilidade em cada filme.
 - Página do filme com sinopse, elenco, direção, onde assistir, trailer (carregado só após o clique) e prateleiras de filmes parecidos.
@@ -38,6 +38,10 @@ Demo: _em breve_
 3. Abra http://localhost:3000. Para os testes: `npm test`.
 
 O token fica só no servidor e nunca vai para o navegador.
+
+## Publicar na Vercel
+
+Defina `TMDB_READ_TOKEN` nas variáveis de ambiente do projeto em **Production e Preview** (sem ela, a página inicial mostra a tela de erro). Trade-off conhecido: `/filme/abc` responde 404 de verdade (via `src/proxy.ts`), mas um ID válido que não existe no TMDB vira "soft 404" (status 200, `noindex` e a tela "Filme não encontrado").
 
 ## Créditos
 

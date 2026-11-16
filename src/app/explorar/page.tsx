@@ -12,7 +12,9 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 
 export const metadata: Metadata = { title: 'Explorar' };
 
-// Rota dinâmica por requisição (lê searchParams e o TMDB); sem casca estática no build.
+// Rota dinâmica: lê searchParams e o TMDB em tempo de requisição. `instant = false` desliga a
+// validação de "navegação instantânea" (a casca estática desta rota não precisa ser provada);
+// o build marca a rota como parcialmente pré-renderizada (◐) e o conteúdo vem na requisição.
 export const instant = false;
 
 function toURLSearchParams(raw: Record<string, string | string[] | undefined>): URLSearchParams {

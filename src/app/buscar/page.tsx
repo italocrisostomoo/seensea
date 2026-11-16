@@ -4,12 +4,17 @@ import { MovieGrid } from '@/components/MovieGrid';
 import { PageShell } from '@/components/PageShell';
 import { SearchBar } from '@/components/SearchBar';
 import { ServiceBadges } from '@/components/ServiceBadges';
+import { redirect } from 'next/navigation';
+import { AVAILABILITY_ATTRIBUTION } from '@/lib/attribution';
+import { MAX_PAGE } from '@/lib/tmdb/discover';
 import { getMovieProviders } from '@/lib/tmdb/movie';
 import { searchMovies } from '@/lib/tmdb/search';
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-// Rota dinâmica por requisição (lê searchParams e o TMDB); sem casca estática no build.
+// Rota dinâmica: lê searchParams e o TMDB em tempo de requisição. `instant = false` desliga a
+// validação de "navegação instantânea" (a casca estática desta rota não precisa ser provada);
+// o build marca a rota como parcialmente pré-renderizada (◐) e o conteúdo vem na requisição.
 export const instant = false;
 
 function first(v: string | string[] | undefined): string {
@@ -17,7 +22,7 @@ function first(v: string | string[] | undefined): string {
 }
 
 function parsePage(raw: string): number {
-  return /^\d+$/.test(raw) && Number(raw) >= 1 ? Math.min(Number(raw), 500) : 1;
+  return /^\d+$/.test(raw) && Number(raw) >= 1 ? Math.min(Number(raw), MAX_PAGE) : 1;
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -45,7 +50,14 @@ export default async function SearchPage({ searchParams }: Props) {
     );
   }
 
-  const result = await searchMovies(q, parsePage(first(sp.pagina)));
+  const requestedPage = parsePage(first(sp.pagina));
+  const result = await searchMovies(q, requestedPage);
+
+  // Página além do fim (ex.: ?pagina=999): leva à última página válida em vez de dizer
+  // "nenhum filme", o que seria falso.
+  if (result.totalPages > 0 && requestedPage > result.totalPages) {
+    redirect(pageHref(q, result.totalPages));
+  }
 
   if (result.results.length === 0) {
     return (
@@ -59,6 +71,9 @@ export default async function SearchPage({ searchParams }: Props) {
   }
 
   const settled = await Promise.allSettled(result.results.map((m) => getMovieProviders(m.id)));
+  settled.forEach((s, i) => {
+    if (s.status === 'rejected') console.error(`[busca] falha nos provedores do filme ${result.results[i].id}:`, s.reason);
+  });
   const providersById = new Map(
     result.results.map((m, i) => {
       const s = settled[i];
@@ -91,7 +106,7 @@ export default async function SearchPage({ searchParams }: Props) {
           </Link>
         )}
       </nav>
-      <p className="mt-6 text-xs text-fg-faint">Dados de disponibilidade: JustWatch</p>
+      <p className="mt-6 text-xs text-fg-faint">{AVAILABILITY_ATTRIBUTION}</p>
     </PageShell>
   );
 }

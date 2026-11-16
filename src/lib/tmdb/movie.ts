@@ -55,7 +55,7 @@ export const getMovie = cache(async (id: number): Promise<MovieDetails | null> =
 export async function getMovieProviders(id: number): Promise<ProviderSplit> {
   const data = await tmdbFetch<{ results?: { BR?: { flatrate?: TmdbProvider[] } } }>(
     `/movie/${id}/watch/providers`,
-    undefined,
+    { language: 'pt-BR' },
     { revalidate: REVALIDATE.movie },
   );
   return splitProviders(data.results?.BR?.flatrate);

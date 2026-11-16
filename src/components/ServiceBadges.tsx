@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { AVAILABILITY_ATTRIBUTION } from "@/lib/attribution";
 import { tmdbImage } from "@/lib/images";
 import type { Provider, ProviderSplit } from "@/lib/tmdb/types";
 
@@ -65,7 +66,7 @@ export function ServiceBadges({
         </div>
       )}
       {empty && <p className="text-sm text-fg-muted">Não disponível em streaming no Brasil no momento</p>}
-      <p className="text-xs text-fg-faint">Dados de disponibilidade: JustWatch</p>
+      <p className="text-xs text-fg-faint">{AVAILABILITY_ATTRIBUTION}</p>
     </div>
   );
 }

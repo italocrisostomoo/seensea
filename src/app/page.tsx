@@ -53,6 +53,15 @@ async function HomeContent() {
     ...THEMES.map((t) => discoverMovies({ keywordIds: t.keywordIds })),
   ]);
 
+  // Se TUDO falhou (TMDB fora do ar, limite de requisições, token ausente), lança o erro para o
+  // error.tsx aparecer, em vez de mostrar só cabeçalho e rodapé. Falha parcial segue em frente.
+  for (const r of [general, ...shelves]) {
+    if (r.status === "rejected") console.error("[home] falha ao carregar do TMDB:", r.reason);
+  }
+  if (general.status === "rejected" && shelves.every((s) => s.status === "rejected")) {
+    throw general.reason instanceof Error ? general.reason : new Error("Falha ao carregar o catálogo do TMDB");
+  }
+
   const popular = general.status === "fulfilled" ? general.value.results : [];
   const [featured, ...trending] = popular;
 

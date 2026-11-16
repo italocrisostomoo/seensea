@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { startTransition, useOptimistic } from 'react';
 import { SERVICES } from '@/config/services';
 import { THEMES } from '@/config/themes';
 import { type Filters, filtersToSearchParams } from '@/lib/filters';
@@ -38,12 +39,20 @@ function chipClass(active: boolean): string {
 
 const groupTitle = 'mb-2.5 text-sm font-semibold text-fg';
 
-export function FiltersPanel({ filters, genres, personName }: Props) {
+export function FiltersPanel({ filters: serverFilters, genres, personName }: Props) {
   const router = useRouter();
+  // A prop `serverFilters` só muda quando o servidor responde. Sem estado otimista, dois cliques
+  // rápidos partiriam do mesmo estado velho e o primeiro filtro se perderia. Com useOptimistic,
+  // cada clique parte do estado já mostrado na tela; ao fim da transição ele volta a seguir a prop.
+  const [filters, setOptimistic] = useOptimistic(serverFilters);
 
   function update(partial: Partial<Filters>) {
-    const qs = filtersToSearchParams({ ...filters, ...partial }).toString();
-    router.push(qs ? `/explorar?${qs}` : '/explorar');
+    const next = { ...filters, ...partial };
+    const qs = filtersToSearchParams(next).toString();
+    startTransition(() => {
+      setOptimistic(next);
+      router.push(qs ? `/explorar?${qs}` : '/explorar');
+    });
   }
 
   const hasPerson = filters.castId !== null || filters.crewId !== null;

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/tmdb/discover', () => ({ discoverMovies: vi.fn() }));
+vi.mock('@/lib/tmdb/discover', () => ({ discoverMovies: vi.fn(), MAX_PAGE: 500 }));
 
 import { GET } from '@/app/api/discover/route';
 import { TmdbError } from '@/lib/tmdb/client';

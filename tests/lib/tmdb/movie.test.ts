@@ -97,7 +97,9 @@ it('getMovieProviders lê /movie/{id}/watch/providers do BR', async () => {
     .mockResolvedValue(json({ results: { BR: { flatrate: fixture['watch/providers'].results.BR.flatrate } } }));
   vi.stubGlobal('fetch', fetchMock);
   const s = await getMovieProviders(7);
-  expect(new URL(fetchMock.mock.calls[0][0]).pathname).toBe('/3/movie/7/watch/providers');
+  const url = new URL(fetchMock.mock.calls[0][0]);
+  expect(url.pathname).toBe('/3/movie/7/watch/providers');
+  expect(url.searchParams.get('language')).toBe('pt-BR');
   expect(s.main.map((x) => x.id)).toEqual([8]);
 });
 

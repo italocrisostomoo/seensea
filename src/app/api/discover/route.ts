@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { filtersToDiscoverQuery, parseFilters } from '@/lib/filters';
 import { TmdbError } from '@/lib/tmdb/client';
-import { discoverMovies } from '@/lib/tmdb/discover';
-
-const MAX_PAGE = 500;
+import { discoverMovies, MAX_PAGE } from '@/lib/tmdb/discover';
 
 export async function GET(request: Request) {
   const sp = new URL(request.url).searchParams;
