@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useMovieList, type ListType } from '@/hooks/useMovieList';
 import { MovieCard } from '@/components/MovieCard';
-import type { MovieSummary } from '@/lib/tmdb/types';
+import { chunk, MAX_IDS, resolveList, type ListMoviesResponse } from '@/lib/lists';
 
 interface HomeTabsProps {
   children: React.ReactNode;
@@ -14,10 +14,49 @@ interface HomeTabsProps {
 
 type TabType = 'destaque' | ListType;
 
-async function fetchSummaries(ids: number[]): Promise<MovieSummary[]> {
-  const res = await fetch(`/api/filmes?ids=${ids.join(',')}`);
-  if (!res.ok) throw new Error(`api/filmes ${res.status}`);
-  return res.json();
+const TABS: { id: TabType; label: string }[] = [
+  { id: 'destaque', label: 'Destaque' },
+  { id: 'watched', label: 'Já assisti' },
+  { id: 'watchlist', label: 'Quero assistir' },
+];
+
+// Em lotes, um de cada vez: cada pedido dispara no máximo MAX_IDS buscas ao TMDB.
+async function fetchSummaries(ids: number[]): Promise<ListMoviesResponse> {
+  const all: ListMoviesResponse = { movies: [], missing: [], failed: [] };
+  for (const batch of chunk(ids, MAX_IDS)) {
+    const res = await fetch(`/api/filmes?ids=${batch.join(',')}`);
+    if (!res.ok) throw new Error(`api/filmes ${res.status}`);
+    const part: ListMoviesResponse = await res.json();
+    all.movies.push(...part.movies);
+    all.missing.push(...part.missing);
+    all.failed.push(...part.failed);
+  }
+  return all;
+}
+
+function MissingCard({ id, type }: { id: number; type: ListType }) {
+  const { removeMovie } = useMovieList(type);
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="flex aspect-[2/3] flex-col items-center justify-center gap-3 rounded-lg bg-white/5 p-3 text-center ring-1 ring-white/10">
+      <p className="text-sm text-fg/70">Filme indisponível</p>
+      <button
+        onClick={async () => {
+          setBusy(true);
+          try {
+            await removeMovie(id);
+          } catch (e) {
+            console.error('[lista] falha ao remover:', e);
+            setBusy(false);
+          }
+        }}
+        disabled={busy}
+        className="rounded border border-fg/30 px-3 py-1.5 text-xs transition hover:bg-fg/10 disabled:opacity-50"
+      >
+        Remover
+      </button>
+    </div>
+  );
 }
 
 function ListMoviesTab({ type }: { type: ListType }) {
@@ -32,7 +71,7 @@ function ListMoviesTab({ type }: { type: ListType }) {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-5">
+      <div className="flex flex-col items-center justify-center px-5 py-12">
         <p className="mb-4 text-lg text-fg/70">Faça login para ver suas listas</p>
         <Link
           href="/auth/login"
@@ -76,18 +115,34 @@ function ListMoviesTab({ type }: { type: ListType }) {
     );
   }
 
-  const list = details.data ?? [];
+  const response = details.data ?? { movies: [], missing: [], failed: [] };
+  const items = resolveList(movies, response);
+  const failed = response.failed.length;
   return (
     <section aria-label={label} className="px-5 py-8 md:px-12">
       <p className="mb-4 text-sm text-fg/70">
-        {list.length} filme{list.length !== 1 ? 's' : ''}
+        {movies.length} filme{movies.length !== 1 ? 's' : ''}
       </p>
+      {failed > 0 && (
+        <p className="mb-4 flex flex-wrap items-center gap-3 text-sm text-fg/70">
+          {failed === 1 ? '1 filme não carregou agora.' : `${failed} filmes não carregaram agora.`}
+          <button onClick={() => details.refetch()} className="font-medium text-fg underline hover:text-accent">
+            Tentar de novo
+          </button>
+        </p>
+      )}
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-        {list.map((movie) => (
-          <li key={movie.id}>
-            <MovieCard movie={movie} />
-          </li>
-        ))}
+        {items.map((item) =>
+          item.kind === 'movie' ? (
+            <li key={item.movie.id}>
+              <MovieCard movie={item.movie} />
+            </li>
+          ) : (
+            <li key={item.id}>
+              <MissingCard id={item.id} type={type} />
+            </li>
+          ),
+        )}
       </ul>
     </section>
   );
@@ -97,45 +152,39 @@ export function HomeTabs({ children }: HomeTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('destaque');
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="flex gap-6 border-b border-fg/10 px-5 pb-4 pt-20 md:px-12 md:pt-6">
-        <button
-          onClick={() => setActiveTab('destaque')}
-          className={`text-sm font-medium transition ${
-            activeTab === 'destaque'
-              ? 'text-fg border-b-2 border-accent pb-4 -mb-4'
-              : 'text-fg/60 hover:text-fg'
-          }`}
-        >
-          Destaque
-        </button>
-        <button
-          onClick={() => setActiveTab('watched')}
-          className={`text-sm font-medium transition ${
-            activeTab === 'watched'
-              ? 'text-fg border-b-2 border-accent pb-4 -mb-4'
-              : 'text-fg/60 hover:text-fg'
-          }`}
-        >
-          Já assisti
-        </button>
-        <button
-          onClick={() => setActiveTab('watchlist')}
-          className={`text-sm font-medium transition ${
-            activeTab === 'watchlist'
-              ? 'text-fg border-b-2 border-accent pb-4 -mb-4'
-              : 'text-fg/60 hover:text-fg'
-          }`}
-        >
-          Quero assistir
-        </button>
+    <div className="relative flex flex-1 flex-col">
+      {/* As abas flutuam no topo, por cima do destaque, sem empurrá-lo para baixo. */}
+      <div
+        role="tablist"
+        aria-label="Listas"
+        className="absolute inset-x-0 top-16 z-30 flex gap-6 px-5 md:top-6 md:px-12"
+      >
+        {TABS.map((tab) => {
+          const active = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={active}
+              onClick={() => setActiveTab(tab.id)}
+              className={`border-b-2 pb-1 text-sm font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] transition-colors ${
+                active ? 'border-accent text-fg' : 'border-transparent text-fg/70 hover:text-fg'
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Tab Content */}
       <div className="flex-1">
-        {activeTab === 'destaque' && <div>{children}</div>}
-        {activeTab === 'watched' && <ListMoviesTab type="watched" />}
-        {activeTab === 'watchlist' && <ListMoviesTab type="watchlist" />}
+        {activeTab === 'destaque' ? (
+          children
+        ) : (
+          <div className="pt-24 md:pt-16">
+            <ListMoviesTab key={activeTab} type={activeTab} />
+          </div>
+        )}
       </div>
     </div>
   );

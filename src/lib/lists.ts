@@ -1,4 +1,37 @@
+import type { MovieSummary } from './tmdb/types';
+
 export type ListType = 'watched' | 'watchlist';
+
+/** Máximo de filmes por pedido a /api/filmes: limita quantas buscas ao TMDB um pedido dispara. */
+export const MAX_IDS = 50;
+
+export interface ListMoviesResponse {
+  movies: MovieSummary[];
+  /** Não existem mais no TMDB. */
+  missing: number[];
+  /** A busca falhou agora (TMDB fora do ar, limite de requisições); pode dar certo depois. */
+  failed: number[];
+}
+
+export type ListItem = { kind: 'movie'; movie: MovieSummary } | { kind: 'missing'; id: number };
+
+export function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
+export function resolveList(ids: number[], res: ListMoviesResponse): ListItem[] {
+  const byId = new Map(res.movies.map((m) => [m.id, m]));
+  const missing = new Set(res.missing);
+  const items: ListItem[] = [];
+  for (const id of ids) {
+    const movie = byId.get(id);
+    if (movie) items.push({ kind: 'movie', movie });
+    else if (missing.has(id)) items.push({ kind: 'missing', id });
+  }
+  return items;
+}
 
 export interface ListEntry {
   tmdbId: number;

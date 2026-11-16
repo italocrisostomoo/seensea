@@ -1,5 +1,38 @@
 import { describe, expect, it } from 'vitest';
-import { idsIn, removeEntry, setStatus, type ListEntry } from '@/lib/lists';
+import { chunk, idsIn, removeEntry, resolveList, setStatus, type ListEntry } from '@/lib/lists';
+import type { MovieSummary } from '@/lib/tmdb/types';
+
+const movie = (id: number): MovieSummary => ({
+  id,
+  title: `Filme ${id}`,
+  year: 2020,
+  posterPath: null,
+  backdropPath: null,
+  rating: 7,
+});
+
+describe('chunk', () => {
+  it('divide em pedaços de no máximo n, mantendo a ordem', () => {
+    expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+    expect(chunk([], 2)).toEqual([]);
+  });
+});
+
+describe('resolveList', () => {
+  it('mantém a ordem da lista e marca os filmes que sumiram do TMDB', () => {
+    const items = resolveList([3, 2, 1], { movies: [movie(1), movie(3)], missing: [2], failed: [] });
+    expect(items).toEqual([
+      { kind: 'movie', movie: movie(3) },
+      { kind: 'missing', id: 2 },
+      { kind: 'movie', movie: movie(1) },
+    ]);
+  });
+
+  it('deixa de fora os que falharam agora, para aparecerem quando der certo', () => {
+    const items = resolveList([1, 2], { movies: [movie(1)], missing: [], failed: [2] });
+    expect(items).toEqual([{ kind: 'movie', movie: movie(1) }]);
+  });
+});
 
 const entries: ListEntry[] = [
   { tmdbId: 1, status: 'watchlist' },

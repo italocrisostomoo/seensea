@@ -24,17 +24,25 @@ create policy "remover da própria lista" on public.movie_lists
 
 grant select, insert, update, delete on public.movie_lists to authenticated;
 
--- Copia o que já existe. Se um filme estava nas duas listas, fica em "Já assisti".
-insert into public.movie_lists (user_id, tmdb_id, status, added_at)
-select user_id, tmdb_id, 'watched', added_at from public.watched_movies
-union all
-select w.user_id, w.tmdb_id, 'watchlist', w.added_at
-from public.watchlist_movies w
-where not exists (
-  select 1 from public.watched_movies x where x.user_id = w.user_id and x.tmdb_id = w.tmdb_id
-);
+-- Projetos criados antes desta versão tinham uma tabela por lista: copia o que existe e apaga.
+-- Se um filme estava nas duas listas, fica em "Já assisti". Em projeto novo, este bloco não faz nada.
+do $$
+begin
+  if to_regclass('public.watched_movies') is not null then
+    insert into public.movie_lists (user_id, tmdb_id, status, added_at)
+    select user_id, tmdb_id, 'watched', added_at from public.watched_movies;
+    drop table public.watched_movies;
+  end if;
 
-drop table public.watched_movies;
-drop table public.watchlist_movies;
+  if to_regclass('public.watchlist_movies') is not null then
+    insert into public.movie_lists (user_id, tmdb_id, status, added_at)
+    select w.user_id, w.tmdb_id, 'watchlist', w.added_at
+    from public.watchlist_movies w
+    where not exists (
+      select 1 from public.movie_lists m where m.user_id = w.user_id and m.tmdb_id = w.tmdb_id
+    );
+    drop table public.watchlist_movies;
+  end if;
+end $$;
 
 commit;
