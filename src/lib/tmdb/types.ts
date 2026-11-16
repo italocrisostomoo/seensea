@@ -69,6 +69,7 @@ export interface MovieDetails {
   directors: Person[];
   cast: Person[];
   providers: ProviderSplit;
+  trailerKey: string | null;
 }
 
 export interface TmdbMovieDetails {
@@ -85,6 +86,7 @@ export interface TmdbMovieDetails {
     cast: { id: number; name: string; profile_path: string | null; order: number }[];
     crew: { id: number; name: string; profile_path: string | null; job: string }[];
   };
+  videos?: { results: { key: string; site: string; type: string; iso_639_1: string }[] };
   keywords?: { keywords: { id: number; name: string }[] };
   'watch/providers'?: { results?: { BR?: { flatrate?: TmdbProvider[] } } };
 }

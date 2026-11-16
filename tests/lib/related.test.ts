@@ -20,6 +20,7 @@ function movie(over: Partial<MovieDetails>): MovieDetails {
     directors: [],
     cast: [],
     providers: { main: [], others: [] },
+    trailerKey: null,
     ...over,
   };
 }

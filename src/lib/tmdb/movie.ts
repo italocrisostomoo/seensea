@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { splitProviders } from '@/lib/providers';
+import { pickTrailer } from '@/lib/trailer';
 import { REVALIDATE, TmdbError, tmdbFetch } from './client';
 import type { MovieDetails, ProviderSplit, TmdbMovieDetails, TmdbProvider } from './types';
 
@@ -15,7 +16,11 @@ export const getMovie = cache(async (id: number): Promise<MovieDetails | null> =
   try {
     raw = await tmdbFetch<TmdbMovieDetails>(
       `/movie/${id}`,
-      { language: 'pt-BR', append_to_response: 'credits,keywords,watch/providers' },
+      {
+        language: 'pt-BR',
+        append_to_response: 'credits,keywords,videos,watch/providers',
+        include_video_language: 'pt,en',
+      },
       { revalidate: REVALIDATE.movie },
     );
   } catch (e) {
@@ -43,6 +48,7 @@ export const getMovie = cache(async (id: number): Promise<MovieDetails | null> =
       .slice(0, 10)
       .map((c) => ({ id: c.id, name: c.name, profilePath: c.profile_path })),
     providers: splitProviders(raw['watch/providers']?.results?.BR?.flatrate),
+    trailerKey: pickTrailer(raw.videos?.results ?? []),
   };
 });
 

@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SeenSea
 
-## Getting Started
+Catálogo de filmes disponíveis nos **streamings por assinatura do Brasil**. Descubra o que assistir agora, filtre por serviço, gênero e tema, e veja em quais plataformas cada filme está.
 
-First, run the development server:
+Demo: _em breve_
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Funcionalidades
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Início com um filme em destaque e prateleiras por serviço e por tema.
+- Explorar com filtros (serviços, gêneros, tema, ator e diretor), ordenação por popularidade, nota ou lançamento e rolagem infinita.
+- Busca por nome, com a disponibilidade em cada filme.
+- Página do filme com sinopse, elenco, direção, onde assistir, trailer (carregado só após o clique) e prateleiras de filmes parecidos.
+- Estados de carregamento e de erro, layout responsivo e tema escuro.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Next.js 16 (App Router, `cacheComponents`) e React
+- TypeScript
+- Tailwind CSS
+- TanStack Query (rolagem infinita)
+- Vitest
 
-## Learn More
+## Como rodar
 
-To learn more about Next.js, take a look at the following resources:
+1. Crie um token de leitura da API do TMDB e coloque em `.env.local`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```
+   TMDB_READ_TOKEN=seu_token_aqui
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Instale e rode:
 
-## Deploy on Vercel
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. Abra http://localhost:3000. Para os testes: `npm test`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+O token fica só no servidor e nunca vai para o navegador.
+
+## Créditos
+
+<a href="https://www.themoviedb.org"><strong>TMDB</strong></a>: This product uses the TMDB API but is not endorsed or certified by TMDB.
+
+Os dados de disponibilidade em streaming vêm do **JustWatch**, via TMDB.
+
+## Como foi planejado
+
+- [Especificação (design)](docs/superpowers/specs/2026-11-15-catalogo-filmes-design.md)
+- [Plano de implementação](docs/superpowers/plans/2026-11-15-catalogo-filmes.md)

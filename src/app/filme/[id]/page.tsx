@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ServiceBadges } from "@/components/ServiceBadges";
 import { Shelf } from "@/components/Shelf";
+import { Trailer } from "@/components/Trailer";
 import { exploreHref } from "@/lib/filters";
 import { tmdbImage } from "@/lib/images";
 import { relatedShelves } from "@/lib/related";
@@ -136,6 +137,7 @@ async function MovieDetailsView({ id }: { id: number }) {
               ))}
             </p>
           )}
+          {movie.trailerKey && <Trailer youtubeKey={movie.trailerKey} title={movie.title} />}
           {movie.cast.length > 0 && (
             <section>
               <h2 className="mb-3 text-lg font-semibold text-white">Elenco</h2>

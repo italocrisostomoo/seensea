@@ -32,6 +32,12 @@ const fixture = {
     ],
   },
   keywords: { keywords: [{ id: 5, name: 'k' }] },
+  videos: {
+    results: [
+      { key: 'teaser1', site: 'YouTube', type: 'Teaser', iso_639_1: 'pt' },
+      { key: 'trailerPt', site: 'YouTube', type: 'Trailer', iso_639_1: 'pt' },
+    ],
+  },
   'watch/providers': {
     results: {
       BR: {
@@ -60,13 +66,14 @@ it('getMovie propaga outros erros', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({}, 500)));
   await expect(getMovie(1)).rejects.toMatchObject({ status: 500 });
 });
-it('getMovie pede append_to_response=credits,keywords,watch/providers em pt-BR', async () => {
+it('getMovie pede append_to_response com videos, include_video_language=pt,en e language pt-BR', async () => {
   const fetchMock = vi.fn().mockResolvedValue(json(fixture));
   vi.stubGlobal('fetch', fetchMock);
   await getMovie(7);
   const url = new URL(fetchMock.mock.calls[0][0]);
   expect(url.pathname).toBe('/3/movie/7');
-  expect(url.searchParams.get('append_to_response')).toBe('credits,keywords,watch/providers');
+  expect(url.searchParams.get('append_to_response')).toBe('credits,keywords,videos,watch/providers');
+  expect(url.searchParams.get('include_video_language')).toBe('pt,en');
   expect(url.searchParams.get('language')).toBe('pt-BR');
 });
 it('getMovie mapeia: overview vazio vira null, diretores por job, elenco ≤ 10, providers do BR', async () => {
@@ -77,6 +84,7 @@ it('getMovie mapeia: overview vazio vira null, diretores por job, elenco ≤ 10,
   expect(m.runtime).toBeNull();
   expect(m.rating).toBe(7.5);
   expect(m.keywordIds).toEqual([5]);
+  expect(m.trailerKey).toBe('trailerPt');
   expect(m.directors).toEqual([{ id: 100, name: 'Diretora', profilePath: '/d.jpg' }]);
   expect(m.cast).toHaveLength(10);
   expect(m.cast[0].id).toBe(15); // menor `order` primeiro
@@ -108,4 +116,9 @@ it('getGenres devolve os gêneros de /genre/movie/list', async () => {
   const url = new URL(fetchMock.mock.calls[0][0]);
   expect(url.pathname).toBe('/3/genre/movie/list');
   expect(url.searchParams.get('language')).toBe('pt-BR');
+});
+it('getMovie sem vídeos tem trailerKey null', async () => {
+  const semVideos = { ...fixture, videos: { results: [] } };
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json(semVideos)));
+  expect((await getMovie(8))!.trailerKey).toBeNull();
 });

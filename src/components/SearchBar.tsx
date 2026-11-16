@@ -13,14 +13,14 @@ export function SearchBar() {
   }
 
   return (
-    <form onSubmit={onSubmit} role="search" className="ml-auto">
+    <form onSubmit={onSubmit} role="search" className="ml-auto min-w-0 max-sm:order-last max-sm:ml-0 max-sm:w-full">
       <input
         type="search"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Buscar filme…"
         aria-label="Buscar filme"
-        className="w-40 rounded-md bg-zinc-800 px-3 py-1.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-600 sm:w-64"
+        className="w-full rounded-md bg-zinc-800 px-3 py-1.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-red-600 sm:w-64"
       />
     </form>
   );
