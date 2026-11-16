@@ -1,72 +1,77 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useMovieList } from '@/hooks/useMovieList';
+import { useMovieList, type ListType } from '@/hooks/useMovieList';
+import { authHref } from '@/lib/auth';
 
 interface MovieListButtonProps {
   tmdbId: number;
-  type: 'watched' | 'watchlist';
+  type: ListType;
 }
+
+const base = 'rounded px-3 py-1.5 text-sm transition disabled:opacity-50';
+const outline = 'border border-fg/30 text-fg/70 hover:bg-fg/10';
 
 export function MovieListButton({ tmdbId, type }: MovieListButtonProps) {
   const router = useRouter();
-  const { user } = useAuth();
-  const { isInList, addMovie, removeMovie } = useMovieList(type);
-  const [isLoading, setIsLoading] = useState(false);
+  const pathname = usePathname();
+  const { user, loading: authLoading } = useAuth();
+  const { isInList, addMovie, removeMovie, loading: listLoading } = useMovieList(type);
+  const [saving, setSaving] = useState(false);
+  const [failed, setFailed] = useState(false);
 
-  const inList = isInList(tmdbId);
   const label = type === 'watched' ? 'Já assisti' : 'Quero assistir';
 
-  const handleClick = async () => {
-    if (!user) {
-      router.push('/auth/login');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      if (inList) {
-        await removeMovie(tmdbId);
-      } else {
-        await addMovie(tmdbId);
-      }
-    } catch (error) {
-      console.error('Error updating list:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Enquanto não se sabe se a pessoa está logada (ou o que há na lista), o botão espera desativado.
+  if (authLoading || (user && listLoading)) {
+    return (
+      <button disabled className={`${base} ${outline}`}>
+        + {label}
+      </button>
+    );
+  }
 
   if (!user) {
     return (
-      <button
-        onClick={handleClick}
-        className="rounded border border-fg/30 px-3 py-1.5 text-sm transition hover:bg-fg/10"
-      >
+      <button onClick={() => router.push(authHref('login', pathname))} className={`${base} ${outline}`}>
         Faça login
       </button>
     );
   }
 
+  const inList = isInList(tmdbId);
+
+  const handleClick = async () => {
+    setFailed(false);
+    setSaving(true);
+    try {
+      if (inList) await removeMovie(tmdbId);
+      else await addMovie(tmdbId);
+    } catch (error) {
+      console.error('[lista] falha ao atualizar:', error);
+      setFailed(true);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <button
-      onClick={handleClick}
-      disabled={isLoading}
-      className={`rounded px-3 py-1.5 text-sm transition ${
-        inList
-          ? 'bg-fg/20 text-fg'
-          : 'border border-fg/30 text-fg/70 hover:bg-fg/10'
-      } disabled:opacity-50`}
-    >
-      {isLoading ? (
-        <span className="inline-block animate-spin">⟳</span>
-      ) : inList ? (
-        <>✓ {label}</>
-      ) : (
-        <>+ {label}</>
+    <>
+      <button
+        onClick={handleClick}
+        disabled={saving}
+        aria-pressed={inList}
+        className={`${base} ${inList ? 'bg-fg/20 text-fg' : outline}`}
+      >
+        {saving ? <span className="inline-block animate-spin">⟳</span> : inList ? <>✓ {label}</> : <>+ {label}</>}
+      </button>
+      {failed && (
+        <span role="alert" className="self-center text-xs text-red-300">
+          Não deu certo. Tente de novo.
+        </span>
       )}
-    </button>
+    </>
   );
 }

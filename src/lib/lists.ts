@@ -2,6 +2,21 @@ import type { MovieSummary } from './tmdb/types';
 
 export type ListType = 'watched' | 'watchlist';
 
+export type HomeTab = 'destaque' | ListType;
+
+const TAB_SLUG: Record<ListType, string> = { watched: 'ja-assisti', watchlist: 'quero-assistir' };
+
+export function tabFromSearch(search: string): HomeTab {
+  const slug = new URLSearchParams(search).get('lista');
+  if (slug === TAB_SLUG.watched) return 'watched';
+  if (slug === TAB_SLUG.watchlist) return 'watchlist';
+  return 'destaque';
+}
+
+export function tabSearch(tab: HomeTab): string {
+  return tab === 'destaque' ? '' : `?lista=${TAB_SLUG[tab]}`;
+}
+
 /** Máximo de filmes por pedido a /api/filmes: limita quantas buscas ao TMDB um pedido dispara. */
 export const MAX_IDS = 50;
 

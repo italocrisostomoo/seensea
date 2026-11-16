@@ -1,11 +1,13 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { authHref, safeNext } from '@/lib/auth';
 
 export function UserMenu() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, logout, loading } = useAuth();
 
   const handleLogout = async () => {
@@ -20,10 +22,10 @@ export function UserMenu() {
   if (!user) {
     return (
       <Link
-        href="/auth/login"
+        href={authHref('login', safeNext(pathname))}
         className="rounded-md bg-fg/10 px-3 py-2 text-sm font-medium text-fg transition hover:bg-fg/20"
       >
-        Login
+        Entrar
       </Link>
     );
   }

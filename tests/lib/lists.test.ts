@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chunk, idsIn, removeEntry, resolveList, setStatus, type ListEntry } from '@/lib/lists';
+import { chunk, idsIn, removeEntry, resolveList, setStatus, tabFromSearch, tabSearch, type ListEntry } from '@/lib/lists';
 import type { MovieSummary } from '@/lib/tmdb/types';
 
 const movie = (id: number): MovieSummary => ({
@@ -9,6 +9,21 @@ const movie = (id: number): MovieSummary => ({
   posterPath: null,
   backdropPath: null,
   rating: 7,
+});
+
+describe('aba na URL', () => {
+  it('lê a aba do endereço', () => {
+    expect(tabFromSearch('?lista=ja-assisti')).toBe('watched');
+    expect(tabFromSearch('?lista=quero-assistir')).toBe('watchlist');
+    expect(tabFromSearch('')).toBe('destaque');
+    expect(tabFromSearch('?lista=outra')).toBe('destaque');
+  });
+
+  it('escreve a aba no endereço, e a home fica sem nada', () => {
+    expect(tabSearch('watched')).toBe('?lista=ja-assisti');
+    expect(tabSearch('watchlist')).toBe('?lista=quero-assistir');
+    expect(tabSearch('destaque')).toBe('');
+  });
 });
 
 describe('chunk', () => {

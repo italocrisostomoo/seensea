@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { authErrorMessage, authHref, nextFromSearch } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+
+// Lido na hora do clique: useSearchParams exigiria Suspense nesta página pré-renderizada.
+const currentNext = () => nextFromSearch(window.location.search);
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,9 +28,9 @@ export default function LoginPage() {
       });
 
       if (signInError) {
-        setError(signInError.message);
+        setError(authErrorMessage(signInError));
       } else {
-        router.push('/');
+        router.push(currentNext());
       }
     } catch {
       setError('Algo deu errado. Tente de novo.');
@@ -38,7 +42,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-full items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <h1 className="mb-8 text-center text-2xl font-bold">Login</h1>
+        <h1 className="mb-8 text-center text-2xl font-bold">Entrar</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -84,7 +88,14 @@ export default function LoginPage() {
 
         <p className="mt-6 text-center text-sm">
           Não tem conta?{' '}
-          <Link href="/auth/signup" className="font-medium text-fg hover:underline">
+          <Link
+            href="/auth/signup"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push(authHref('signup', currentNext()));
+            }}
+            className="font-medium text-fg hover:underline"
+          >
             Cadastre-se
           </Link>
         </p>

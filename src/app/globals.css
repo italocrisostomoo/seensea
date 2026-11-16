@@ -99,6 +99,11 @@ body {
   color: #000;
 }
 
+/* Home: o destaque é do servidor e fica sempre montado; some quando uma lista está aberta. */
+.home-tabs:has([data-lista]) > .home-destaque {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

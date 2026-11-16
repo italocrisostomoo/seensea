@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { authErrorMessage, authHref, nextFromSearch } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+
+// Lido na hora do clique: useSearchParams exigiria Suspense nesta página pré-renderizada.
+const currentNext = () => nextFromSearch(window.location.search);
 
 export default function SignupPage() {
   const router = useRouter();
@@ -40,13 +44,14 @@ export default function SignupPage() {
       });
 
       if (signUpError) {
-        setError(signUpError.message);
+        setError(authErrorMessage(signUpError));
       } else if (data.session) {
-        router.push('/');
+        router.push(currentNext());
       } else {
         setSuccess(true);
+        const login = authHref('login', currentNext());
         setTimeout(() => {
-          router.push('/auth/login');
+          router.push(login);
         }, 2000);
       }
     } catch {
@@ -59,7 +64,7 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-full items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <h1 className="mb-8 text-center text-2xl font-bold">Cadastro</h1>
+        <h1 className="mb-8 text-center text-2xl font-bold">Criar conta</h1>
 
         {success ? (
           <div className="rounded bg-green-900/20 px-4 py-3 text-center text-sm text-green-300">
@@ -130,7 +135,14 @@ export default function SignupPage() {
 
         <p className="mt-6 text-center text-sm">
           Já tem conta?{' '}
-          <Link href="/auth/login" className="font-medium text-fg hover:underline">
+          <Link
+            href="/auth/login"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push(authHref('login', currentNext()));
+            }}
+            className="font-medium text-fg hover:underline"
+          >
             Entrar
           </Link>
         </p>
