@@ -2,7 +2,7 @@
 
 Catálogo de filmes disponíveis nos **streamings por assinatura do Brasil**. Descubra o que assistir agora, filtre por serviço, gênero e tema, e veja em quais plataformas cada filme está.
 
-Demo: _em breve_
+Demo: [seensea.vercel.app](https://seensea.vercel.app)
 
 ## Funcionalidades
 
