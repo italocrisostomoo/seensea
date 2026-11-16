@@ -1,40 +1,100 @@
 import Image from "next/image";
-import Link from "next/link";
+import type { ReactNode } from "react";
 import { tmdbImage } from "@/lib/images";
-import type { MovieSummary, ProviderSplit } from "@/lib/tmdb/types";
-import { ServiceBadges } from "./ServiceBadges";
+import { type Palette, paletteStyle } from "@/lib/palette";
+import type { TitleLogo } from "@/lib/tmdb/artwork";
+import type { MovieDetails } from "@/lib/tmdb/types";
+import { formatRating } from "./MovieCard";
 
-export function Hero({ movie, providers }: { movie: MovieSummary; providers: ProviderSplit }) {
-  const backdrop = tmdbImage(movie.backdropPath, "w1280");
-  const rating = movie.rating.toFixed(1).replace(".", ",");
+export function formatRuntime(min: number): string {
+  return `${Math.floor(min / 60)}h${String(min % 60).padStart(2, "0")}`;
+}
+
+/** Nome do filme: a arte oficial do título quando existe, senão o nome em letra de cartaz. */
+export function TitleArt({ title, logo, size }: { title: string; logo: TitleLogo | null; size: "home" | "page" }) {
+  const src = logo ? tmdbImage(logo.path, "w500") : null;
+  if (src && logo) {
+    return (
+      <h1>
+        <Image
+          src={src}
+          alt={title}
+          width={500}
+          height={Math.round(500 / logo.aspectRatio)}
+          priority
+          className={`h-auto w-auto object-contain object-left drop-shadow-[0_4px_24px_rgb(0_0_0/0.6)] ${
+            size === "home"
+              ? "max-h-28 max-w-[min(24rem,80vw)] sm:max-h-36"
+              : "max-h-32 max-w-[min(28rem,80vw)] sm:max-h-44"
+          }`}
+        />
+      </h1>
+    );
+  }
   return (
-    <section className="relative isolate flex min-h-[22rem] items-end overflow-hidden rounded-xl bg-zinc-900 sm:min-h-[28rem]">
+    <h1
+      className={`display text-balance text-fg drop-shadow-[0_4px_24px_rgb(0_0_0/0.6)] ${
+        size === "home" ? "text-5xl sm:text-7xl" : "text-5xl sm:text-7xl lg:text-8xl"
+      }`}
+    >
+      {title}
+    </h1>
+  );
+}
+
+export function MovieMeta({ movie, genres = true }: { movie: MovieDetails; genres?: boolean }) {
+  return (
+    <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-fg-muted sm:text-base">
+      {movie.year && <span>{movie.year}</span>}
+      {movie.runtime && <span>{formatRuntime(movie.runtime)}</span>}
+      {movie.rating > 0 && (
+        <span className="text-fg">
+          <span className="text-rating" aria-hidden>★</span>
+          <span className="sr-only">Nota</span> {formatRating(movie.rating)}
+        </span>
+      )}
+      {genres && movie.genres.slice(0, 3).map((g) => (
+        <span key={g.id}>{g.name}</span>
+      ))}
+    </p>
+  );
+}
+
+/**
+ * Cena do filme sangrando até as bordas, tingida pela cor do pôster.
+ * Fica atrás do trilho de navegação no desktop (margem negativa do mesmo tamanho).
+ */
+export function HeroBackdrop({
+  backdropPath,
+  palette,
+  className = "",
+  children,
+}: {
+  backdropPath: string | null;
+  palette: Palette;
+  className?: string;
+  children: ReactNode;
+}) {
+  const backdrop = tmdbImage(backdropPath, "original");
+  return (
+    <section
+      style={paletteStyle(palette)}
+      className={`relative isolate flex flex-col justify-end overflow-hidden bg-ambient md:-ml-(--rail) md:pl-(--rail) ${className}`}
+    >
       {backdrop && (
         <Image
           src={backdrop}
           alt=""
           fill
           priority
-          sizes="(min-width: 1280px) 1280px, 100vw"
-          className="-z-10 object-cover"
+          sizes="100vw"
+          className="-z-30 object-cover object-[60%_20%]"
         />
       )}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/60 to-transparent" />
-      <div className="flex max-w-2xl flex-col gap-3 p-5 sm:p-8">
-        <h1 className="text-3xl font-bold text-white sm:text-4xl">{movie.title}</h1>
-        <p className="text-sm text-zinc-300">
-          {movie.year ? `${movie.year} · ` : ""}
-          <span className="text-amber-400">★ {rating}</span>
-        </p>
-        <ServiceBadges providers={providers} variant="card" />
-        <p className="text-xs text-zinc-400">Dados de disponibilidade: JustWatch</p>
-        <Link
-          href={`/filme/${movie.id}`}
-          className="w-fit rounded-md bg-white px-5 py-2 text-sm font-semibold text-black hover:bg-zinc-200"
-        >
-          Ver filme
-        </Link>
-      </div>
+      <div aria-hidden className="absolute inset-0 -z-20 bg-ambient opacity-50 mix-blend-soft-light" />
+      <div aria-hidden className="hero-fade-side absolute inset-0 -z-10 hidden md:block" />
+      <div aria-hidden className="hero-fade-base absolute inset-0 -z-10" />
+      {children}
     </section>
   );
 }

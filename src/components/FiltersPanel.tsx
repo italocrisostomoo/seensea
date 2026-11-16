@@ -23,14 +23,16 @@ function toggle(list: number[], id: number): number[] {
 }
 
 function chipClass(active: boolean): string {
-  return `shrink-0 rounded-full border px-3 py-1 text-sm transition-colors ${
+  return `shrink-0 rounded-full border px-3.5 py-1.5 text-sm transition-colors ${
     active
-      ? 'border-red-500 bg-red-600 text-white'
-      : 'border-white/15 bg-white/5 text-zinc-300 hover:bg-white/10'
+      ? 'border-accent bg-accent font-medium text-black'
+      : 'border-white/15 bg-white/5 text-fg-muted hover:border-white/30 hover:text-fg'
   }`;
 }
 
-const selectClass = 'rounded-md border border-white/15 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-100';
+const selectClass =
+  'rounded-md border border-white/15 bg-black/60 px-3 py-2 text-sm text-fg focus:border-accent focus:outline-none';
+const groupTitle = 'mb-2.5 text-sm font-semibold text-fg';
 
 export function FiltersPanel({ filters, genres, personName }: Props) {
   const router = useRouter();
@@ -43,11 +45,11 @@ export function FiltersPanel({ filters, genres, personName }: Props) {
   const hasPerson = filters.castId !== null || filters.crewId !== null;
 
   return (
-    <details open className="mb-6 rounded-lg border border-white/10 bg-white/5 p-4">
-      <summary className="cursor-pointer text-sm font-semibold text-white md:hidden">Filtros</summary>
-      <div className="mt-3 flex flex-col gap-4 md:mt-0">
+    <details open className="mb-10 rounded-xl border border-line bg-black/40 p-4 backdrop-blur md:p-6">
+      <summary className="cursor-pointer text-sm font-semibold text-fg md:hidden">Filtros</summary>
+      <div className="mt-3 flex flex-col gap-5 md:mt-0">
         <div>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Serviços</h2>
+          <h2 className={groupTitle}>Serviços</h2>
           <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap">
             {SERVICES.map((s) => {
               const active = filters.services.includes(s.id);
@@ -67,7 +69,7 @@ export function FiltersPanel({ filters, genres, personName }: Props) {
         </div>
 
         <div>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">Gêneros</h2>
+          <h2 className={groupTitle}>Gêneros</h2>
           <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap">
             {genres.map((g) => {
               const active = filters.genres.includes(g.id);
@@ -87,7 +89,7 @@ export function FiltersPanel({ filters, genres, personName }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-zinc-400">
+          <label className="flex items-center gap-2 text-sm text-fg-muted">
             Tema
             <select
               className={selectClass}
@@ -103,7 +105,7 @@ export function FiltersPanel({ filters, genres, personName }: Props) {
             </select>
           </label>
 
-          <label className="flex items-center gap-2 text-sm text-zinc-400">
+          <label className="flex items-center gap-2 text-sm text-fg-muted">
             Ordem
             <select
               className={selectClass}
@@ -121,10 +123,11 @@ export function FiltersPanel({ filters, genres, personName }: Props) {
           {hasPerson && personName && (
             <button
               type="button"
-              className="rounded-full border border-red-500 bg-red-600/20 px-3 py-1 text-sm text-white"
+              className="rounded-full border border-accent bg-accent/15 px-3.5 py-1.5 text-sm text-fg hover:bg-accent hover:text-black"
               onClick={() => update({ castId: null, crewId: null })}
+              aria-label={`Tirar o filtro de ${personName}`}
             >
-              Com: {personName} ✕
+              Com {personName} <span aria-hidden>✕</span>
             </button>
           )}
         </div>

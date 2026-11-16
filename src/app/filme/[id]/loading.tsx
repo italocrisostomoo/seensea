@@ -1,14 +1,15 @@
 export default function Loading() {
   return (
     <main className="flex-1" aria-busy="true">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 md:flex-row">
-        <div className="mx-auto aspect-[2/3] w-56 shrink-0 animate-pulse rounded-lg bg-zinc-800 md:mx-0 md:w-72" />
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          <div className="h-9 w-3/4 animate-pulse rounded bg-zinc-800" />
-          <div className="h-4 w-1/3 animate-pulse rounded bg-zinc-800" />
-          <div className="h-24 animate-pulse rounded bg-zinc-800" />
-          <div className="h-12 w-1/2 animate-pulse rounded bg-zinc-800" />
+      <span className="sr-only">Carregando filme…</span>
+      <div className="ambient-wash flex min-h-[min(88svh,52rem)] items-end gap-12 px-5 pb-14 md:-ml-(--rail) md:pl-[calc(var(--rail)+3rem)] md:pr-12">
+        <div className="flex max-w-2xl flex-1 flex-col gap-5">
+          <div className="h-28 w-80 max-w-full animate-pulse rounded-lg bg-white/10" />
+          <div className="h-4 w-1/3 animate-pulse rounded bg-white/10" />
+          <div className="h-24 animate-pulse rounded bg-white/5" />
+          <div className="h-10 w-1/2 animate-pulse rounded bg-white/5" />
         </div>
+        <div className="ml-auto hidden aspect-[2/3] w-64 animate-pulse rounded-xl bg-white/10 lg:block xl:w-72" />
       </div>
     </main>
   );

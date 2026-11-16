@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { MovieGrid } from '@/components/MovieGrid';
+import { PageShell } from '@/components/PageShell';
+import { SearchBar } from '@/components/SearchBar';
 import { ServiceBadges } from '@/components/ServiceBadges';
 import { getMovieProviders } from '@/lib/tmdb/movie';
 import { searchMovies } from '@/lib/tmdb/search';
@@ -27,7 +29,8 @@ function pageHref(q: string, pagina: number): string {
   return `/buscar?q=${encodeURIComponent(q)}&pagina=${pagina}`;
 }
 
-const linkClass = 'rounded-md bg-zinc-800 px-4 py-2 text-sm text-white hover:bg-zinc-700';
+const linkClass =
+  'rounded-md border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-medium text-fg transition-colors hover:border-accent hover:text-accent';
 
 export default async function SearchPage({ searchParams }: Props) {
   const sp = await searchParams;
@@ -35,9 +38,10 @@ export default async function SearchPage({ searchParams }: Props) {
 
   if (q === '') {
     return (
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
-        <p className="text-zinc-300">Digite o nome de um filme.</p>
-      </main>
+      <PageShell title="Buscar">
+        <SearchBar autoFocus />
+        <p className="mt-4 text-fg-muted">Procure pelo título em português ou no original.</p>
+      </PageShell>
     );
   }
 
@@ -45,9 +49,12 @@ export default async function SearchPage({ searchParams }: Props) {
 
   if (result.results.length === 0) {
     return (
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
-        <p className="text-zinc-300">Nenhum filme encontrado para &quot;{q}&quot;.</p>
-      </main>
+      <PageShell title="Buscar">
+        <SearchBar key={q} defaultValue={q} />
+        <p className="mt-6 text-fg-muted">
+          Nenhum filme encontrado para &ldquo;{q}&rdquo;. Confira a grafia ou tente o título original.
+        </p>
+      </PageShell>
     );
   }
 
@@ -60,8 +67,11 @@ export default async function SearchPage({ searchParams }: Props) {
   );
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-white">Resultados para &quot;{q}&quot;</h1>
+    <PageShell title="Buscar">
+      <SearchBar key={q} defaultValue={q} />
+      <h2 className="heading mb-6 mt-10 text-xl text-fg-muted">
+        Resultados para <span className="text-fg">&ldquo;{q}&rdquo;</span>
+      </h2>
       <MovieGrid
         movies={result.results}
         renderFooter={(movie) => {
@@ -69,19 +79,19 @@ export default async function SearchPage({ searchParams }: Props) {
           return providers ? <ServiceBadges providers={providers} variant="card" /> : null;
         }}
       />
-      <nav className="mt-8 flex items-center gap-4">
+      <nav className="mt-10 flex items-center gap-3" aria-label="Páginas de resultados">
         {result.page > 1 && (
           <Link href={pageHref(q, result.page - 1)} className={linkClass}>
-            Anterior
+            Página anterior
           </Link>
         )}
         {result.page < result.totalPages && (
           <Link href={pageHref(q, result.page + 1)} className={linkClass}>
-            Próxima
+            Próxima página
           </Link>
         )}
       </nav>
-      <p className="mt-6 text-xs text-zinc-500">Dados de disponibilidade: JustWatch</p>
-    </main>
+      <p className="mt-6 text-xs text-fg-faint">Dados de disponibilidade: JustWatch</p>
+    </PageShell>
   );
 }

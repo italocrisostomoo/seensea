@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { connection } from 'next/server';
 import { FiltersPanel } from '@/components/FiltersPanel';
 import { InfiniteMovieGrid } from '@/components/InfiniteMovieGrid';
+import { PageShell } from '@/components/PageShell';
 import { filtersToDiscoverQuery, parseFilters } from '@/lib/filters';
 import { discoverMovies } from '@/lib/tmdb/discover';
 import { getGenres, getPerson } from '@/lib/tmdb/movie';
@@ -24,6 +26,7 @@ function toURLSearchParams(raw: Record<string, string | string[] | undefined>): 
 
 export default async function ExplorePage({ searchParams }: Props) {
   const filters = parseFilters(toURLSearchParams(await searchParams));
+  await connection(); // discoverMovies usa a data atual: renderiza em tempo de requisição
   const personId = filters.castId ?? filters.crewId;
 
   const [genres, firstPage, person] = await Promise.all([
@@ -33,22 +36,21 @@ export default async function ExplorePage({ searchParams }: Props) {
   ]);
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-white">Explorar</h1>
+    <PageShell title="Explorar">
       <FiltersPanel filters={filters} genres={genres} personName={person?.name ?? null} />
       {firstPage.results.length > 0 ? (
         <InfiniteMovieGrid filters={filters} initialPage={firstPage} />
       ) : (
         <div className="flex flex-col items-start gap-4 py-8">
-          <p className="text-zinc-300">Nenhum filme encontrado com esses filtros.</p>
+          <p className="text-fg-muted">Nenhum filme combina com esses filtros. Tire um ou mais para ver mais opções.</p>
           <Link
             href="/explorar"
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500"
+            className="rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:brightness-110"
           >
             Limpar filtros
           </Link>
         </div>
       )}
-    </main>
+    </PageShell>
   );
 }

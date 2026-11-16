@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import Link from "next/link";
+import { HeroBackdrop, MovieMeta, TitleArt } from "@/components/Hero";
 import { ServiceBadges } from "@/components/ServiceBadges";
 import { Shelf } from "@/components/Shelf";
 import { Trailer } from "@/components/Trailer";
 import { exploreHref } from "@/lib/filters";
 import { tmdbImage } from "@/lib/images";
+import { paletteStyle } from "@/lib/palette";
 import { relatedShelves } from "@/lib/related";
 import { themesForMovie } from "@/lib/themes";
+import { getPosterPalette, getTitleLogo } from "@/lib/tmdb/artwork";
 import { discoverMovies } from "@/lib/tmdb/discover";
 import { getMovie, parseMovieId } from "@/lib/tmdb/movie";
 import type { Person } from "@/lib/tmdb/types";
 
 type Props = { params: Promise<{ id: string }> };
-
-function formatRuntime(min: number): string {
-  return `${Math.floor(min / 60)}h${String(min % 60).padStart(2, "0")}`;
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const id = parseMovieId((await params).id);
@@ -36,21 +36,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-function PersonPhoto({ person }: { person: Person }) {
+const chipClass =
+  "inline-block rounded-full border border-accent/35 bg-accent/10 px-3.5 py-1.5 text-sm text-fg transition-colors hover:bg-accent hover:text-black";
+
+function PersonLink({ person }: { person: Person }) {
   const photo = tmdbImage(person.profilePath, "w185");
   return (
-    <>
-      <div className="relative size-20 overflow-hidden rounded-full bg-zinc-800">
+    <Link href={exploreHref({ castId: person.id })} className="group flex w-24 flex-col items-center gap-2 text-center">
+      <div className="relative size-20 overflow-hidden rounded-full bg-white/5 ring-2 ring-transparent transition-shadow group-hover:ring-accent">
         {photo ? (
-          <Image src={photo} alt={person.name} fill sizes="80px" className="object-cover" />
+          <Image src={photo} alt="" fill sizes="80px" className="object-cover" />
         ) : (
-          <div className="flex h-full items-center justify-center text-2xl text-zinc-500">
+          <div className="display flex h-full items-center justify-center text-3xl text-fg-faint">
             {person.name.slice(0, 1)}
           </div>
         )}
       </div>
-      <span className="text-xs text-zinc-300">{person.name}</span>
-    </>
+      <span className="text-xs leading-snug text-fg-muted group-hover:text-fg">{person.name}</span>
+    </Link>
   );
 }
 
@@ -58,106 +61,113 @@ async function MovieDetailsView({ id }: { id: number }) {
   const movie = await getMovie(id);
   if (!movie) notFound();
 
-  const poster = tmdbImage(movie.posterPath, "w342");
-  const backdrop = tmdbImage(movie.backdropPath, "w1280");
-  const themes = themesForMovie(movie.keywordIds);
   const shelves = relatedShelves(movie);
-  const results = await Promise.allSettled(shelves.map((s) => discoverMovies(s.query)));
-  const chipClass = "rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-200 hover:bg-zinc-700";
-  const meta = [
-    movie.year ? String(movie.year) : null,
-    movie.runtime ? formatRuntime(movie.runtime) : null,
-    `★ ${movie.rating.toFixed(1).replace(".", ",")}`,
-  ].filter(Boolean);
+  await connection(); // as prateleiras usam a data atual (discoverMovies): renderiza em tempo de requisição
+  const [palette, logo, results] = await Promise.all([
+    getPosterPalette(movie.posterPath),
+    getTitleLogo(movie.id),
+    Promise.allSettled(shelves.map((s) => discoverMovies(s.query))),
+  ]);
+  const poster = tmdbImage(movie.posterPath, "w500");
+  const themes = themesForMovie(movie.keywordIds);
+  const tags = [
+    ...movie.genres.map((g) => ({ key: `g${g.id}`, name: g.name, href: exploreHref({ genres: [g.id] }) })),
+    ...themes.map((t) => ({ key: `t${t.slug}`, name: t.name, href: exploreHref({ theme: t.slug }) })),
+  ];
 
   return (
-    <article className="relative isolate">
-      {backdrop && (
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <Image src={backdrop} alt="" fill priority sizes="100vw" className="object-cover opacity-25" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/30" />
-        </div>
-      )}
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-8 md:flex-row">
-        <div className="relative mx-auto aspect-[2/3] w-56 shrink-0 overflow-hidden rounded-lg bg-zinc-800 md:mx-0 md:w-72">
-          {poster ? (
-            <Image
-              src={poster}
-              alt={`Pôster de ${movie.title}`}
-              fill
-              priority
-              sizes="(min-width: 768px) 288px, 224px"
-              className="object-cover"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center p-4 text-center text-zinc-400">
-              {movie.title}
-            </div>
-          )}
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          <h1 className="text-3xl font-bold text-white">{movie.title}</h1>
-          <p className="text-sm text-zinc-300">{meta.join(" · ")}</p>
-          {movie.genres.length > 0 && (
-            <ul className="flex flex-wrap gap-2">
-              {movie.genres.map((g) => (
-                <li key={g.id}>
-                  <Link href={exploreHref({ genres: [g.id] })} className={chipClass}>
-                    {g.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          {themes.length > 0 && (
-            <ul className="flex flex-wrap gap-2">
-              {themes.map((t) => (
-                <li key={t.slug}>
-                  <Link href={exploreHref({ theme: t.slug })} className={chipClass}>
-                    {t.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="leading-relaxed text-zinc-200">
-            {movie.overview ?? "Sinopse indisponível em português."}
-          </p>
-          <ServiceBadges providers={movie.providers} variant="page" />
-          {movie.directors.length > 0 && (
-            <p className="text-sm text-zinc-300">
-              <span className="text-zinc-400">Direção:</span>{" "}
-              {movie.directors.map((d, i) => (
-                <span key={d.id}>
-                  {i > 0 && ", "}
-                  <Link href={exploreHref({ crewId: d.id })} className="hover:text-white hover:underline">
-                    {d.name}
-                  </Link>
-                </span>
-              ))}
-            </p>
-          )}
-          {movie.trailerKey && <Trailer youtubeKey={movie.trailerKey} title={movie.title} />}
-          {movie.cast.length > 0 && (
-            <section>
-              <h2 className="mb-3 text-lg font-semibold text-white">Elenco</h2>
-              <ul className="flex gap-4 overflow-x-auto pb-2">
-                {movie.cast.map((p) => (
-                  <li key={p.id} className="shrink-0">
-                    <Link
-                      href={exploreHref({ castId: p.id })}
-                      className="flex w-24 flex-col items-center gap-1 text-center hover:text-white"
-                    >
-                      <PersonPhoto person={p} />
+    <article style={paletteStyle(palette)}>
+      <HeroBackdrop backdropPath={movie.backdropPath} palette={palette} className="min-h-[min(88svh,52rem)] lg:min-h-[min(90svh,58rem)]">
+        <div className="flex items-end gap-12 px-5 pb-14 pt-28 md:px-12">
+          <div className="hero-rise flex max-w-2xl flex-1 flex-col gap-5">
+            <TitleArt title={movie.title} logo={logo} size="page" />
+            <MovieMeta movie={movie} genres={false} />
+            {tags.length > 0 && (
+              <ul className="flex flex-wrap gap-2" aria-label="Gêneros e temas">
+                {tags.map((t) => (
+                  <li key={t.key}>
+                    <Link href={t.href} className={chipClass}>
+                      {t.name}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </section>
+            )}
+            <p className="max-w-[60ch] text-base leading-relaxed text-fg/90 sm:text-lg">
+              {movie.overview ?? "Sinopse indisponível em português."}
+            </p>
+            {movie.directors.length > 0 && (
+              <p className="text-sm text-fg-muted">
+                Direção de{" "}
+                {movie.directors.map((d, i) => (
+                  <span key={d.id}>
+                    {i > 0 && ", "}
+                    <Link href={exploreHref({ crewId: d.id })} className="font-medium text-fg hover:text-accent">
+                      {d.name}
+                    </Link>
+                  </span>
+                ))}
+              </p>
+            )}
+            <div className="flex flex-col gap-6 pt-2">
+              <ServiceBadges providers={movie.providers} variant="page" />
+              {movie.trailerKey && (
+                <a
+                  href="#trailer"
+                  className="flex w-fit items-center gap-2 rounded-md bg-accent px-6 py-3 text-sm font-semibold text-black transition-[filter] hover:brightness-110"
+                >
+                  <svg viewBox="0 0 24 24" className="size-4 fill-current" aria-hidden>
+                    <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z" />
+                  </svg>
+                  Ver trailer
+                </a>
+              )}
+            </div>
+          </div>
+
+          {poster && (
+            <div className="relative isolate ml-auto hidden aspect-[2/3] w-64 shrink-0 lg:block xl:w-72">
+              <Image
+                src={poster}
+                alt=""
+                aria-hidden
+                fill
+                sizes="18rem"
+                className="-z-10 translate-y-6 scale-95 object-cover opacity-70 blur-3xl saturate-150"
+              />
+              <Image
+                src={poster}
+                alt={`Pôster de ${movie.title}`}
+                fill
+                priority
+                sizes="18rem"
+                className="rounded-xl object-cover ring-1 ring-white/15"
+              />
+            </div>
           )}
         </div>
-      </div>
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 pb-10">
+      </HeroBackdrop>
+
+      <div className="flex flex-col gap-12 pb-6 pt-4">
+        {movie.trailerKey && (
+          <Trailer
+            youtubeKey={movie.trailerKey}
+            title={movie.title}
+            thumbnail={tmdbImage(movie.backdropPath, "w1280")}
+          />
+        )}
+        {movie.cast.length > 0 && (
+          <section className="flex flex-col gap-4" aria-label="Elenco">
+            <h2 className="heading px-5 text-xl text-fg sm:text-2xl md:px-12">Elenco</h2>
+            <ul className="scrollbar-none flex gap-3 overflow-x-auto px-5 pb-2 md:px-12">
+              {movie.cast.map((p) => (
+                <li key={p.id} className="shrink-0">
+                  <PersonLink person={p} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {shelves.map((shelf, i) => {
           const r = results[i];
           const movies = r.status === "fulfilled" ? r.value.results.filter((m) => m.id !== movie.id) : [];

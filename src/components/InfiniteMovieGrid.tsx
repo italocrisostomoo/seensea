@@ -71,14 +71,14 @@ export function InfiniteMovieGrid({
   return (
     <>
       <MovieGrid movies={movies} />
-      <div ref={sentinel} className="py-8 text-center text-sm text-zinc-400" aria-live="polite">
+      <div ref={sentinel} className="py-10 text-center text-sm text-fg-muted" aria-live="polite">
         {isError ? (
           <div className="flex flex-col items-center gap-3">
             <p>Não foi possível carregar mais filmes.</p>
             <button
               type="button"
               onClick={() => void (hasNextPage ? fetchNextPage() : refetch())}
-              className="rounded-md bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-500"
+              className="rounded-md bg-accent px-5 py-2.5 font-semibold text-black hover:brightness-110"
             >
               Tentar de novo
             </button>
@@ -86,7 +86,7 @@ export function InfiniteMovieGrid({
         ) : isFetchingNextPage ? (
           <p>Carregando…</p>
         ) : !hasNextPage ? (
-          <p>Você chegou ao fim.</p>
+          <p>Esses são todos os filmes com esses filtros.</p>
         ) : null}
       </div>
     </>

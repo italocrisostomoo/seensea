@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
+import { Nav } from "@/components/Nav";
 import { Providers } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+// Archivo: grotesca sóbria com eixo de largura. Larga e pesada nos títulos, normal no texto.
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin", "latin-ext"],
+  axes: ["wdth"],
 });
 
 export const metadata: Metadata = {
@@ -22,15 +19,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-100">
+    <html lang="pt-BR" className={`${archivo.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col bg-ink text-fg">
         <Providers>
-          <Header />
-          {children}
-          <Footer />
+          <Nav />
+          <div className="flex min-h-full flex-1 flex-col md:pl-(--rail)">
+            {children}
+            <Footer />
+          </div>
         </Providers>
       </body>
     </html>
